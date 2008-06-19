@@ -7,4 +7,11 @@
      <stringbundle id="lastfm-strings" src="chrome://lastfm/locale/overlay.properties"/>
   </stringbundleset>  
 
+ <statusbar id="status-bar">
+   <statusbarpanel id="lastfm-status-icon"
+     class="statusbarpanel-iconic"
+     src="chrome://lastfm/skin/as.png"
+     tooltiptext="Sample status bar item"
+   />
+ </statusbar>
 </overlay>

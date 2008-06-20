@@ -42,6 +42,11 @@ Lastfm.onLoginClick = function(event) {
 Lastfm.onCancelClick = function(event) {
   this._service.cancelLogin();
 }
+Lastfm.onLogoutClick = function(event) {
+  document.getElementById('lastfmDeck').selectedPanel =
+    document.getElementById('lastfmLogin');
+  this._service.logout();
+}
   
 /* last.fm event handlers for login events */
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
@@ -59,6 +64,15 @@ Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   document.getElementById('lastfmDeck').selectedPanel =
     document.getElementById('lastfmProfile');
+}
+
+/* last.fm profile changed */
+Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
+  document.getElementById('lastfmImage').setAttribute('src',
+      this._service.avatar);
+  document.getElementById('lastfmRealname').textContent = 
+    this._service.realname;
+  document.getElementById('lastfmTracks').textContent = this._service.playcount;
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

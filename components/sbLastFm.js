@@ -104,7 +104,11 @@ function sbLastFm_login() {
   // first step - handshake.
   var self = this;
   this.handshake(function success() {
-    self.eachListener(function(l) { l.onLoginSucceeded(); });
+    self.updateProfile(function success() {
+      self.eachListener(function(l) { l.onLoginSucceeded(); });
+    }, function failure() {
+      self.eachListener(function(l) { l.onLoginFailed(); });
+    });
   }, function failure() {
     // FIXME: actually, we need some kind of retry / error reporting
     self.eachListener(function(l) { l.onLoginFailed(); });
@@ -118,6 +122,14 @@ function sbLastFm_cancelLogin() {
     this._handshake_xhr.abort();
   }
   this.eachListener(function(l) { l.onLoginCancelled(); });
+}
+
+// logout is pretty simple
+sbLastFm.prototype.logout =
+function sbLastFm_logout() {
+  this.session = null;
+  this.nowplaying_url = null;
+  this.submission_url = null;
 }
 
 // do the handshake
@@ -170,6 +182,56 @@ function sbLastFm_handshake(success, failure, auth_failure) {
   this._handshake_xhr.open('GET', hs_url, true);
   this._handshake_xhr.send(null);
 
+}
+
+// update profile data
+sbLastFm.prototype.updateProfile =
+function sbLastFm_updateProfile(succeeded, failed) {
+  var url = 'http://ws.audioscrobbler.com/1.0/user/' +
+    encodeURIComponent(this.username) + '/profile.xml';
+  self = this;
+  this.getXML(url, function success(xml) {
+    function text(tag) {
+      var tags = xml.getElementsByTagName(tag);
+      if (tags.length) {
+        return tags[0].textContent;
+      } else {
+        return '';
+      }
+    }
+    self.realname = text('realname');
+    self.playcount = parseInt(text('playcount'));
+    self.avatar = text('avatar');
+    self.profileurl = text('url');
+    self.eachListener(function(l) { l.onProfileUpdated(); });
+    succeeded();
+  }, function failure(xhr) {
+    failed();
+  });
+}
+
+
+// get XML from an URL
+sbLastFm.prototype.getXML =
+function sbLastFm_getXML(url, success, failure) {
+  var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+    .createInstance();
+  // run in the background, since we're in xpcomland
+  xhr.mozBackgroundRequest = true;
+  // force an xml response
+  xhr.overrideMimeType('text/xml');
+  xhr.onload = function(event) {
+    if (xhr.responseXML) {
+      success(xhr.responseXML);
+    } else {
+      failure(xhr);
+    }
+  };
+  xhr.onerror = function(event) {
+    failure(xhr);
+  };
+  xhr.open('GET', url, true);
+  xhr.send(null);
 }
 
 

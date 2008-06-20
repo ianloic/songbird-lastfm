@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="chrome://lastfm/skin/overlay.css" ?>
-<overlay id="lastfm-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<overlay id="lastfm-overlay" 
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  >
 
   <script src="main.js"/>
 
@@ -46,10 +49,10 @@
         </vbox>
         <vbox id="lastfmProfile">
           <hbox>
-            <image id="lastfmImage" src="http://userserve-ak.last.fm/serve/160/724801.jpg" />
+            <image id="lastfmImage" src="" />
             <vbox>
-              <label style="font-weight: bold">Ian McKellar</label>
-              <label>Played 1234 tracks</label>
+              <description><html:span id="lastfmRealname" /></description>
+              <description>Played <html:span id="lastfmTracks" /> tracks</description>
             </vbox>
           </hbox>
           <spacer flex="1"/>

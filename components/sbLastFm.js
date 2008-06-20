@@ -114,8 +114,8 @@ function sbLastFm_login() {
 }
 sbLastFm.prototype.cancelLogin =
 function sbLastFm_cancelLogin() {
-  if (this._login_xhr) {
-    this._login_xhr.abort();
+  if (this._handshake_xhr) {
+    this._handshake_xhr.abort();
   }
   this.eachListener(function(l) { l.onLoginCancelled(); });
 }
@@ -131,18 +131,18 @@ function sbLastFm_handshake(success, failure, auth_failure) {
 
   Cu.reportError(hs_url);
 
-  this._login_xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+  this._handshake_xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
     .createInstance();
-  this._login_xhr.mozBackgroundRequest = true;
+  this._handshake_xhr.mozBackgroundRequest = true;
   var self = this;
-  this._login_xhr.onload = function(event) {
+  this._handshake_xhr.onload = function(event) {
     /* loaded */
-    if (self._login_xhr.status != 200) {
-      Cu.reportError('status: '+self._login_xhr.status);
+    if (self._handshake_xhr.status != 200) {
+      Cu.reportError('status: '+self._handshake_xhr.status);
       failure();
       return;
     }
-    var response_lines = self._login_xhr.responseText.split('\n');
+    var response_lines = self._handshake_xhr.responseText.split('\n');
     if (response_lines.length < 4) {
       Cu.reportError('not enough lines: '+response_lines.toSource());
       failure();
@@ -163,12 +163,12 @@ function sbLastFm_handshake(success, failure, auth_failure) {
     this.submission_url = response_lines[3];
     success();
   };
-  this._login_xhr.onerror = function(event) {
+  this._handshake_xhr.onerror = function(event) {
     /* loaded */
     Cu.reportError('errored');
   };
-  this._login_xhr.open('GET', hs_url, true);
-  this._login_xhr.send(null);
+  this._handshake_xhr.open('GET', hs_url, true);
+  this._handshake_xhr.send(null);
 
 }
 

@@ -24,6 +24,20 @@ Lastfm.onLoad = function() {
       function(event) { Lastfm.onCancelClick(event); }, false);
   document.getElementById('lastfmLogoutButton').addEventListener('command',
       function(event) { Lastfm.onLogoutClick(event); }, false);
+
+  // wire up UI events for the profile links
+  document.getElementById('lastfmImage').addEventListener('click',
+      function(event) { Lastfm.onProfileClick(event); }, false);
+  document.getElementById('lastfmRealname').addEventListener('click',
+      function(event) { Lastfm.onProfileClick(event); }, false);
+
+  // copy the username & password out of the service
+  document.getElementById('lastfmUsername').value = this._service.username;
+  document.getElementById('lastfmPassword').value = this._service.password;
+  // if we have a username & password try to log in
+  if (this._service.username && this._service.password) {
+    this._service.login();
+  }
 }
   
 

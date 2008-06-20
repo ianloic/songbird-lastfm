@@ -1,5 +1,6 @@
 // these constants make everything better
 const Cc = Components.classes;
+const CC = Components.Constructor;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
@@ -7,9 +8,21 @@ const Cu = Components.utils;
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-// prefs service
-const PREFS = Cc['@mozilla.org/preferences-service;1']
-    .getService(Ci.nsIPrefBranch);
+// login manager
+const loginManager = Cc["@mozilla.org/login-manager;1"]
+    .getService(Ci.nsILoginManager);
+const nsLoginInfo = new CC("@mozilla.org/login-manager/loginInfo;1",
+    Ci.nsILoginInfo, "init");
+const LOGIN_HOSTNAME = 'https://www.last.fm';
+const LOGIN_FORMURL = 'https://www.last.fm';
+const LOGIN_FIELD_USERNAME = 'username';
+const LOGIN_FIELD_PASSWORD = 'password';
+
+// helper for getting the set of relevant logins
+function lastfmLogins() {
+  return loginManager.findLogins({}, LOGIN_HOSTNAME, LOGIN_FORMURL, 
+      null);
+}
 
 // calculate a hex md5 digest thing
 function md5(str) {
@@ -50,9 +63,21 @@ function sbLastFm() {
   this._listeners = [];
 
   // username & password
-  // FIXME: load from prefs
-  this.username = 'ianloic';
-  this.password = 'hello world';
+  this.username = '';
+  this.password = '';
+  // lets ask the login manager
+  var logins = lastfmLogins();
+  Cu.reportError(logins.length);
+  for (var i = 0; i < logins.length; i++) {
+    if (i==0) {
+      // use the first username & password we find
+      this.username = logins[i].username;
+      this.password = logins[i].password;
+    } else {
+      // get rid of the rest
+      loginManager.removeLogin(logins[i]);
+    }
+  }  
 
   // session info
   this.session = null;
@@ -99,14 +124,23 @@ function sbLastFm_eachListener(aCallback) {
 sbLastFm.prototype.login =
 function sbLastFm_login() {
   this.eachListener(function(l) { l.onLoginBegins(); });
-  // FIXME: log in and fetch profile information
   
   // first step - handshake.
   var self = this;
   this.handshake(function success() {
+    // clear old login infos
+    var logins = lastfmLogins();
+    for (var i=0; i<logins.length; i++) { 
+      loginManager.removeLogin(logins[i]); 
+    }
+    // set new login info
+    loginManager.addLogin(new nsLoginInfo(LOGIN_HOSTNAME,
+        LOGIN_FORMURL, null, self.username, self.password,
+        LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
+    // download profile info
     self.updateProfile(function success() {
       self.eachListener(function(l) { l.onLoginSucceeded(); });
-    }, function failure() {
+  }, function failure() {
       self.eachListener(function(l) { l.onLoginFailed(); });
     });
   }, function failure() {

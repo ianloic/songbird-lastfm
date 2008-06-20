@@ -6,7 +6,9 @@
     <em:type>2</em:type>
     <em:name>Last.fm</em:name>
     <em:version>0.1.0</em:version>
-    <em:creator>Ian McKellar (Songbird)</em:creator>
+    <em:creator>Ian McKellar</em:creator>
+    <em:contributor>Steve Krulewitz</em:contributor>
+    <em:contributor>Steve Lau</em:contributor>
 
 
     <em:description>Publish your playback history to Last.fm</em:description>

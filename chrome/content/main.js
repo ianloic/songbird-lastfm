@@ -33,23 +33,32 @@ Lastfm.onUnLoad = function() {
   this._service.removeListener(this);
 }
 
-
+/* button event handlers */
 Lastfm.onLoginClick = function(event) {
   this._service.username = document.getElementById('lastfmUsername').value;
   this._service.password = document.getElementById('lastfmPassword').value;
   this._service.login();
-
+}
+Lastfm.onCancelClick = function(event) {
+  this._service.cancelLogin();
+}
+  
+/* last.fm event handlers for login events */
+Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   document.getElementById('lastfmDeck').selectedPanel =
     document.getElementById('lastfmLoggingIn');
 }
-  
-
-Lastfm.onCancelClick = function(event) {
-  this._service.cancelLogin();
-
+Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   document.getElementById('lastfmDeck').selectedPanel =
     document.getElementById('lastfmLogin');
 }
-  
+Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
+  document.getElementById('lastfmDeck').selectedPanel =
+    document.getElementById('lastfmLogin');
+}
+Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
+  document.getElementById('lastfmDeck').selectedPanel =
+    document.getElementById('lastfmProfile');
+}
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

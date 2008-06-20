@@ -50,15 +50,27 @@ function sbLastFm_removeListener(aListener) {
     }
   }
 }
+sbLastFm.prototype.eachListener =
+function sbLastFm_eachListener(aCallback) {
+  for (var i=0; i<this._listeners.length; i++) {
+    try {
+      aCallback(this._listeners[i]);
+    } catch(e) {
+      Cu.reportError(e);
+    }
+  }
+}
 
 // login functionality
 sbLastFm.prototype.login =
 function sbLastFm_login() {
+  this.eachListener(function(l) { l.onLoginBegins(); });
   // FIXME: log in and fetch profile information
 }
 sbLastFm.prototype.cancelLogin =
 function sbLastFm_cancelLogin() {
   // FIXME: cancel the in-process login
+  this.eachListener(function(l) { l.onLoginCancelled(); });
 }
 
 

@@ -47,6 +47,12 @@ Lastfm.onLogoutClick = function(event) {
     document.getElementById('lastfmLogin');
   this._service.logout();
 }
+
+/* profile click event handler */
+Lastfm.onProfileClick = function(event) {
+  gBrowser.loadURI(this._service.profileurl, null, null, event);
+  document.getElementById('lastfmPanel').hidePopup();
+}
   
 /* last.fm event handlers for login events */
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {

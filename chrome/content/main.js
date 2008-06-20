@@ -8,49 +8,48 @@ if (typeof Lastfm == 'undefined') {
  * Called when the window finishes loading
  */
 Lastfm.onLoad = function() {
-  // initialization code
+  // the window has finished loading
   this._initialized = true;
   this._strings = document.getElementById("lastfm-strings");
   this._service = Components.classes['@songbirdnest.com/lastfm;1']
     .getService().wrappedJSObject
   
-  // Perform extra actions the first time the extension is run
-  if (Application.prefs.get("extensions.lastfm.firstrun").value) {
-    Application.prefs.setValue("extensions.lastfm.firstrun", false);
-    this._firstRunSetup();
-  }
-
   // listen to events from our Last.fm service
   this._service.addListener(this);
 
   // wire up UI events for the buttons
   document.getElementById('lastfmLoginButton').addEventListener('command',
-      function(event) { Lastfm.onLoginClick(event); });
+      function(event) { Lastfm.onLoginClick(event); }, false);
   document.getElementById('lastfmCancelButton').addEventListener('command',
-      function(event) { Lastfm.onCancelClick(event); });
+      function(event) { Lastfm.onCancelClick(event); }, false);
   document.getElementById('lastfmLogoutButton').addEventListener('command',
-      function(event) { Lastfm.onLogoutClick(event); });
+      function(event) { Lastfm.onLogoutClick(event); }, false);
 }
   
 
-/**
- * Called when the window is about to close
- */
 Lastfm.onUnLoad = function() {
+  // the window is about to close
   this._initialized = false;
   this._service.removeListener(this);
 }
-  
 
-  
-/**
- * Perform extra setup the first time the extension is run
- */
-Lastfm._firstRunSetup : function() {
 
-  // Call this.doHelloWorld() after a 3 second timeout
-  setTimeout(function(controller) { controller.doHelloWorld(); }, 3000, this); 
+Lastfm.onLoginClick = function(event) {
+  this._service.username = document.getElementById('lastfmUsername').value;
+  this._service.password = document.getElementById('lastfmPassword').value;
+  this._service.login();
 
+  document.getElementById('lastfmDeck').selectedPanel =
+    document.getElementById('lastfmLoggingIn');
 }
+  
+
+Lastfm.onCancelClick = function(event) {
+  this._service.cancelLogin();
+
+  document.getElementById('lastfmDeck').selectedPanel =
+    document.getElementById('lastfmLogin');
+}
+  
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

@@ -19,6 +19,11 @@ function sbLastFm() {
 
   // keep track of our listeners
   this._listeners = [];
+
+  // username & password
+  // FIXME: load from prefs
+  this.username = 'ianloic';
+  this.password = 'hello world';
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -44,6 +49,16 @@ function sbLastFm_removeListener(aListener) {
       return;
     }
   }
+}
+
+// login functionality
+sbLastFm.prototype.login =
+function sbLastFm_login() {
+  // FIXME: log in and fetch profile information
+}
+sbLastFm.prototype.cancelLogin =
+function sbLastFm_cancelLogin() {
+  // FIXME: cancel the in-process login
 }
 
 

@@ -31,16 +31,17 @@
           <spacer flex="1"/>
           <hbox>
             <spacer flex="1"/>
-            <button id="lastfmLoginButton" oncommand="document.getElementById('lastfmDeck').selectedIndex++">Log in</button>
+            <button id="lastfmLoginButton">Log in</button>
           </hbox>
         </vbox>
         <vbox id="lastfmLoggingIn">
+          <spacer flex="1"/>
           <label value="Logging in..."/>
           <progressmeter mode="undetermined"/>
           <spacer flex="1"/>
           <hbox>
             <spacer flex="1"/>
-            <button id="lastfmLoginCancel" oncommand="document.getElementById('lastfmDeck').selectedIndex++">Cancel</button>
+            <button id="lastfmCancelButton">Cancel</button>
           </hbox>
         </vbox>
         <vbox id="lastfmProfile">
@@ -54,7 +55,7 @@
           <spacer flex="1"/>
           <hbox>
             <spacer flex="1"/>
-            <button id="lastfmLogoutButton" oncommand="document.getElementById('lastfmDeck').selectedIndex = 0">Log out</button>
+            <button id="lastfmLogoutButton">Log out</button>
           </hbox>
         </vbox>
       </deck>

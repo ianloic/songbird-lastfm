@@ -17,14 +17,25 @@ Lastfm.Controller = {
     // initialization code
     this._initialized = true;
     this._strings = document.getElementById("lastfm-strings");
+    this._service = Components.classes['@songbirdnest.com/lastfm;1']
+      .getService().wrappedJSObject
     
     // Perform extra actions the first time the extension is run
     if (Application.prefs.get("extensions.lastfm.firstrun").value) {
       Application.prefs.setValue("extensions.lastfm.firstrun", false);
       this._firstRunSetup();
     }
-    
 
+    // listen to events from our Last.fm service
+    this._service.addListener(this);
+
+    // wire up UI events for the buttons
+    document.getElementById('lastfmLoginButton').addEventListener('command',
+        function(event) { Lastfm.Controller.onLoginClick(event); });
+    document.getElementById('lastfmCancelButton').addEventListener('command',
+        function(event) { Lastfm.Controller.onCancelClick(event); });
+    document.getElementById('lastfmLogoutButton').addEventListener('command',
+        function(event) { Lastfm.Controller.onLogoutClick(event); });
   },
   
 
@@ -33,6 +44,7 @@ Lastfm.Controller = {
    */
   onUnLoad: function() {
     this._initialized = false;
+    this._service.removeListener(this);
   },
   
 

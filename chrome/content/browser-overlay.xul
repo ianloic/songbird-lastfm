@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://lastfm/skin/overlay.css" ?>
 <overlay id="lastfm-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <script src="main.js"/>
@@ -7,11 +8,66 @@
      <stringbundle id="lastfm-strings" src="chrome://lastfm/locale/overlay.properties"/>
   </stringbundleset>  
 
+  <popupset id="mainPopupSet">
+    <panel id="lastfmPanel" position="before_end">
+      <deck id="lastfmDeck">
+        <vbox id="lastfmLogin">
+          <grid>
+            <columns>
+              <column/>
+              <column flex="1"/>
+            </columns>
+            <rows>
+              <row>
+                <label value="Username:"/>
+                <textbox id="lastfmUsername"/>
+              </row>
+              <row>
+                <label value="Password:"/>
+                <textbox id="lastfmPassword" type="password"/>
+              </row>
+            </rows>
+          </grid>
+          <spacer flex="1"/>
+          <hbox>
+            <spacer flex="1"/>
+            <button id="lastfmLoginButton" oncommand="document.getElementById('lastfmDeck').selectedIndex++">Log in</button>
+          </hbox>
+        </vbox>
+        <vbox id="lastfmLoggingIn">
+          <label value="Logging in..."/>
+          <progressmeter mode="undetermined"/>
+          <spacer flex="1"/>
+          <hbox>
+            <spacer flex="1"/>
+            <button id="lastfmLoginCancel" oncommand="document.getElementById('lastfmDeck').selectedIndex++">Cancel</button>
+          </hbox>
+        </vbox>
+        <vbox id="lastfmProfile">
+          <hbox>
+            <image id="lastfmImage" src="http://userserve-ak.last.fm/serve/160/724801.jpg" />
+            <vbox>
+              <label style="font-weight: bold">Ian McKellar</label>
+              <label>Played 1234 tracks</label>
+            </vbox>
+          </hbox>
+          <spacer flex="1"/>
+          <hbox>
+            <spacer flex="1"/>
+            <button id="lastfmLogoutButton" oncommand="document.getElementById('lastfmDeck').selectedIndex = 0">Log out</button>
+          </hbox>
+        </vbox>
+      </deck>
+    </panel>
+  </popupset>
+
   <statusbar id="status-bar">
     <statusbarpanel id="lastfm-status-icon"
       class="statusbarpanel-iconic"
       src="chrome://lastfm/skin/as.png"
       tooltiptext="Sample status bar item"
+      popup="lastfmPanel"
+      context="lastfmPanel"
     />
   </statusbar>
 </overlay>

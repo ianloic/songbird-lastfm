@@ -13,7 +13,7 @@ Lastfm.onLoad = function() {
   this._strings = document.getElementById("lastfm-strings");
   this._service = Components.classes['@songbirdnest.com/lastfm;1']
     .getService().wrappedJSObject
-  
+
   // listen to events from our Last.fm service
   this._service.addListener(this);
 
@@ -39,7 +39,7 @@ Lastfm.onLoad = function() {
     this._service.login();
   }
 }
-  
+
 
 Lastfm.onUnLoad = function() {
   // the window is about to close
@@ -67,7 +67,7 @@ Lastfm.onProfileClick = function(event) {
   gBrowser.loadURI(this._service.profileurl, null, null, event);
   document.getElementById('lastfmPanel').hidePopup();
 }
-  
+
 /* last.fm event handlers for login events */
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   document.getElementById('lastfmDeck').selectedPanel =
@@ -90,7 +90,7 @@ Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
 Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
   document.getElementById('lastfmImage').setAttribute('src',
       this._service.avatar);
-  document.getElementById('lastfmRealname').textContent = 
+  document.getElementById('lastfmRealname').textContent =
     this._service.realname;
   document.getElementById('lastfmTracks').textContent = this._service.playcount;
 }

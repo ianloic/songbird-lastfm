@@ -245,6 +245,25 @@ function sbLastFm_updateProfile(succeeded, failed) {
 }
 
 
+// set now playing for the current user
+/*
+
+sbLastFm.prototype.nowPlaying =
+function sbLastFm_nowPlaying(artist, track, album, length, trackno) {
+  var url = this.nowplaying_url;
+  var body = 's=' + encodeURIComponent(this.session) +
+    '&a=' + encodeURIComponent(artist) +
+    '&t=' + encodeURIComponent(track) +
+    '&b=' + encodeURIComponent(album) +
+    '&l=' + encodeURIComponent(length) +
+    '&n=' + encodeURIComponent(trackno) +
+    '&m=';
+  this.post(url, body, ...);
+}
+*/
+
+
+
 // get XML from an URL
 sbLastFm.prototype.getXML =
 function sbLastFm_getXML(url, success, failure) {
@@ -266,6 +285,14 @@ function sbLastFm_getXML(url, success, failure) {
   };
   xhr.open('GET', url, true);
   xhr.send(null);
+  return xhr;
+}
+
+
+// post to last.fm
+sbLastFm.prototype.post =
+function sbLastFm_post(url, args, success, failure) {
+  // do stuff
 }
 
 

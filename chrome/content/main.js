@@ -4,9 +4,7 @@ if (typeof Lastfm == 'undefined') {
   var Lastfm = {};
 }
 
-/**
- * Called when the window finishes loading
- */
+// Called when the window finishes loading
 Lastfm.onLoad = function() {
   // the window has finished loading
   this._initialized = true;
@@ -86,7 +84,7 @@ Lastfm.onUnLoad = function() {
   this._service.listeners.remove(this);
 }
 
-/* button event handlers */
+// button event handlers
 Lastfm.onLoginClick = function(event) {
   this._service.username = this._username.value;
   this._service.password = this._password.value;
@@ -100,13 +98,13 @@ Lastfm.onLogoutClick = function(event) {
   this._service.logout();
 }
 
-/* profile click event handler */
+// profile click event handler
 Lastfm.onProfileClick = function(event) {
   gBrowser.loadURI(this._service.profileurl, null, null, event);
   this._panel.hidePopup();
 }
 
-/* last.fm event handlers for login events */
+// last.fm event handlers for login events
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this._deck.selectedPanel = this._loggingIn;
 }
@@ -120,7 +118,7 @@ Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this._deck.selectedPanel = this._profile;
 }
 
-/* last.fm profile changed */
+// last.fm profile changed
 Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
   this._image.setAttribute('src',
       this._service.avatar);

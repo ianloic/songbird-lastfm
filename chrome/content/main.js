@@ -1,4 +1,10 @@
 
+const ICON_BUSY = 'chrome://lastfm/skin/as.png';
+const ICON_LOGGED_OUT = 'chrome://lastfm/skin/as.png';
+const ICON_LOGGED_IN = 'chrome://lastfm/skin/as.png';
+const ICON_ERROR = 'chrome://lastfm/skin/as.png';
+
+
 // Make a namespace.
 if (typeof Lastfm == 'undefined') {
   var Lastfm = {};
@@ -107,15 +113,23 @@ Lastfm.onProfileClick = function(event) {
 // last.fm event handlers for login events
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this._deck.selectedPanel = this._loggingIn;
+  this.setStatusIcon(ICON_BUSY);
+  this.setStatusText('Logging in to Last.fm');
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   this._deck.selectedPanel = this._login;
+  this.setStatusIcon(ICON_LOGGED_OUT);
+  this.setStatusText('Click to log into Last.fm');
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
   this._deck.selectedPanel = this._login;
+  this.setStatusIcon(ICON_ERROR);
+  this.setStatusText('Login to Last.fm failed');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this._deck.selectedPanel = this._profile;
+  this.setStatusIcon(ICON_LOGGED_IN);
+  this.setStatusText('Logged in and scrobbling.')
 }
 
 // last.fm profile changed
@@ -125,6 +139,16 @@ Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
   this._realname.textContent =
     this._service.realname;
   this._tracks.textContent = this._service.playcount;
+}
+
+Lastfm.setStatusIcon = function Lastfm_setStatusIcon(aIcon) {
+  // update the status icon's icon
+  this._statusIcon.setAttribute('src', aIcon);
+}
+
+Lastfm.setStatusText = function Lastfm_setStatusText(aText) {
+  // update the status icon's text
+  this._statusIcon.setAttribute('tooltiptext', aText);
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

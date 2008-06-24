@@ -53,6 +53,35 @@ function md5(str) {
   return s;
 }
 
+// An object to track listeners
+function Listeners() {
+  this._listeners = [];
+}
+Listeners.prototype.add = function Listeners_add(aListener) {
+  this._listeners.push(aListener);
+}
+Listeners.prototype.remove = function Listeners_remove(aListener) {
+  for(;;) {
+    // find our listener in the array
+    let i = this._listeners.indexOf(aListener);
+    if (i >= 0) {
+      // remove it
+      this._listeners.splice(i, 1);
+    } else {
+      return;
+    }
+  }
+}
+Listeners.prototype.each = function Listeners_each(aCallback) {
+  for (var i=0; i<this._listeners.length; i++) {
+    try {
+      aCallback(this._listeners[i]);
+    } catch(e) {
+      Cu.reportError(e);
+    }
+  }
+}
+
 
 function sbLastFm() {
   // our interface is really lightweight - make the service available as a JS
@@ -60,7 +89,7 @@ function sbLastFm() {
   this.wrappedJSObject = this;
 
   // keep track of our listeners
-  this._listeners = [];
+  this.listeners = new Listeners();
 
   // username & password
   this.username = '';
@@ -91,39 +120,10 @@ sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
 sbLastFm.prototype.QueryInterface = XPCOMUtils.generateQI([]);
 
-// manage listeners
-sbLastFm.prototype.addListener =
-function sbLastFm_addListener(aListener) {
-  this._listeners.push(aListener);
-}
-sbLastFm.prototype.removeListener =
-function sbLastFm_removeListener(aListener) {
-  for(;;) {
-    // find our listener in the array
-    let i = this._listeners.indexOf(aListener);
-    if (i >= 0) {
-      // remove it
-      this._listeners.splice(i, 1);
-    } else {
-      return;
-    }
-  }
-}
-sbLastFm.prototype.eachListener =
-function sbLastFm_eachListener(aCallback) {
-  for (var i=0; i<this._listeners.length; i++) {
-    try {
-      aCallback(this._listeners[i]);
-    } catch(e) {
-      Cu.reportError(e);
-    }
-  }
-}
-
 // login functionality
 sbLastFm.prototype.login =
 function sbLastFm_login() {
-  this.eachListener(function(l) { l.onLoginBegins(); });
+  this.listeners.each(function(l) { l.onLoginBegins(); });
 
   // first step - handshake.
   var self = this;
@@ -139,15 +139,15 @@ function sbLastFm_login() {
         LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
     // download profile info
     self.updateProfile(function success() {
-      self.eachListener(function(l) { l.onLoginSucceeded(); });
+      self.listeners.each(function(l) { l.onLoginSucceeded(); });
   }, function failure() {
-      self.eachListener(function(l) { l.onLoginFailed(); });
+      self.listeners.each(function(l) { l.onLoginFailed(); });
     });
   }, function failure() {
     // FIXME: actually, we need some kind of retry / error reporting
-    self.eachListener(function(l) { l.onLoginFailed(); });
+    self.listeners.each(function(l) { l.onLoginFailed(); });
   }, function auth_failure() {
-    self.eachListener(function(l) { l.onLoginFailed(); });
+    self.listeners.each(function(l) { l.onLoginFailed(); });
   });
 }
 sbLastFm.prototype.cancelLogin =
@@ -155,7 +155,7 @@ function sbLastFm_cancelLogin() {
   if (this._handshake_xhr) {
     this._handshake_xhr.abort();
   }
-  this.eachListener(function(l) { l.onLoginCancelled(); });
+  this.listeners.each(function(l) { l.onLoginCancelled(); });
 }
 
 // logout is pretty simple
@@ -237,7 +237,7 @@ function sbLastFm_updateProfile(succeeded, failed) {
     self.playcount = parseInt(text('playcount'));
     self.avatar = text('avatar');
     self.profileurl = text('url');
-    self.eachListener(function(l) { l.onProfileUpdated(); });
+    self.listeners.each(function(l) { l.onProfileUpdated(); });
     succeeded();
   }, function failure(xhr) {
     failed();

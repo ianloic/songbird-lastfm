@@ -15,7 +15,7 @@ Lastfm.onLoad = function() {
     .getService().wrappedJSObject
 
   // listen to events from our Last.fm service
-  this._service.addListener(this);
+  this._service.listeners.add(this);
 
   // wire up UI events for the buttons
   document.getElementById('lastfmLoginButton').addEventListener('command',
@@ -44,7 +44,7 @@ Lastfm.onLoad = function() {
 Lastfm.onUnLoad = function() {
   // the window is about to close
   this._initialized = false;
-  this._service.removeListener(this);
+  this._service.listeners.remove(this);
 }
 
 /* button event handlers */

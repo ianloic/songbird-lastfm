@@ -11,8 +11,14 @@ Lastfm.onLoad = function() {
   // the window has finished loading
   this._initialized = true;
   this._strings = document.getElementById("lastfm-strings");
+
+  // get the XPCOM service as a JS object
   this._service = Components.classes['@songbirdnest.com/lastfm;1']
     .getService().wrappedJSObject
+
+  // get references to our pieces of ui
+  // statusbar icon
+  this._statusIcon = document.getElementById('lastfmStatusIcon');
 
   // listen to events from our Last.fm service
   this._service.listeners.add(this);

@@ -20,7 +20,7 @@ const LOGIN_FIELD_PASSWORD = 'password';
 
 // helper for getting the set of relevant logins
 function lastfmLogins() {
-  return loginManager.findLogins({}, LOGIN_HOSTNAME, LOGIN_FORMURL, 
+  return loginManager.findLogins({}, LOGIN_HOSTNAME, LOGIN_FORMURL,
       null);
 }
 
@@ -54,10 +54,10 @@ function md5(str) {
 }
 
 
-function sbLastFm() { 
+function sbLastFm() {
   // our interface is really lightweight - make the service available as a JS
   // object so we can avoid the IDL / XPConnect complexity.
-  this.wrappedJSObject = this; 
+  this.wrappedJSObject = this;
 
   // keep track of our listeners
   this._listeners = [];
@@ -77,7 +77,7 @@ function sbLastFm() {
       // get rid of the rest
       loginManager.removeLogin(logins[i]);
     }
-  }  
+  }
 
   // session info
   this.session = null;
@@ -92,11 +92,11 @@ sbLastFm.prototype.classID =
 sbLastFm.prototype.QueryInterface = XPCOMUtils.generateQI([]);
 
 // manage listeners
-sbLastFm.prototype.addListener = 
+sbLastFm.prototype.addListener =
 function sbLastFm_addListener(aListener) {
   this._listeners.push(aListener);
 }
-sbLastFm.prototype.removeListener = 
+sbLastFm.prototype.removeListener =
 function sbLastFm_removeListener(aListener) {
   for(;;) {
     // find our listener in the array
@@ -124,14 +124,14 @@ function sbLastFm_eachListener(aCallback) {
 sbLastFm.prototype.login =
 function sbLastFm_login() {
   this.eachListener(function(l) { l.onLoginBegins(); });
-  
+
   // first step - handshake.
   var self = this;
   this.handshake(function success() {
     // clear old login infos
     var logins = lastfmLogins();
-    for (var i=0; i<logins.length; i++) { 
-      loginManager.removeLogin(logins[i]); 
+    for (var i=0; i<logins.length; i++) {
+      loginManager.removeLogin(logins[i]);
     }
     // set new login info
     loginManager.addLogin(new nsLoginInfo(LOGIN_HOSTNAME,

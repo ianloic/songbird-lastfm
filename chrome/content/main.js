@@ -17,29 +17,62 @@ Lastfm.onLoad = function() {
     .getService().wrappedJSObject
 
   // get references to our pieces of ui
+
   // statusbar icon
   this._statusIcon = document.getElementById('lastfmStatusIcon');
+
+  // the panel
+  this._panel = document.getElementById('lastfmPanel');
+
+  // the deck
+  this._deck = document.getElementById('lastfmDeck');
+
+  // login page of the deck
+  this._login = document.getElementById('lastfmLogin');
+  // login username field
+  this._username = document.getElementById('lastfmUsername');
+  // login password field
+  this._password = document.getElementById('lastfmPassword');
+  // login button
+  this._loginButton = document.getElementById('lastfmLoginButton');
+
+  // the logging-in page of the deck
+  this._loggingIn = document.getElementById('lastfmLoggingIn');
+  // login cancel button
+  this._cancelButton = document.getElementById('lastfmCancelButton');
+
+  // the logged-in / profile page of the deck
+  this._profile = document.getElementById('lastfmProfile');
+  // logout button
+  this._logoutButton = document.getElementById('lastfmLogoutButton');
+  // profile image
+  this._image = document.getElementById('lastfmImage');
+  // profile real name
+  this._realname = document.getElementById('lastfmRealname');
+  // profile tracks
+  this._tracks = document.getElementById('lastfmTracks');
+
 
   // listen to events from our Last.fm service
   this._service.listeners.add(this);
 
   // wire up UI events for the buttons
-  document.getElementById('lastfmLoginButton').addEventListener('command',
+  this._loginButton.addEventListener('command',
       function(event) { Lastfm.onLoginClick(event); }, false);
-  document.getElementById('lastfmCancelButton').addEventListener('command',
+  this._cancelButton.addEventListener('command',
       function(event) { Lastfm.onCancelClick(event); }, false);
-  document.getElementById('lastfmLogoutButton').addEventListener('command',
+  this._logoutButton.addEventListener('command',
       function(event) { Lastfm.onLogoutClick(event); }, false);
 
   // wire up UI events for the profile links
-  document.getElementById('lastfmImage').addEventListener('click',
+  this._image.addEventListener('click',
       function(event) { Lastfm.onProfileClick(event); }, false);
-  document.getElementById('lastfmRealname').addEventListener('click',
+  this._realname.addEventListener('click',
       function(event) { Lastfm.onProfileClick(event); }, false);
 
   // copy the username & password out of the service
-  document.getElementById('lastfmUsername').value = this._service.username;
-  document.getElementById('lastfmPassword').value = this._service.password;
+  this._username.value = this._service.username;
+  this._password.value = this._service.password;
   // if we have a username & password try to log in
   if (this._service.username && this._service.password) {
     this._service.login();
@@ -55,50 +88,45 @@ Lastfm.onUnLoad = function() {
 
 /* button event handlers */
 Lastfm.onLoginClick = function(event) {
-  this._service.username = document.getElementById('lastfmUsername').value;
-  this._service.password = document.getElementById('lastfmPassword').value;
+  this._service.username = this._username.value;
+  this._service.password = this._password.value;
   this._service.login();
 }
 Lastfm.onCancelClick = function(event) {
   this._service.cancelLogin();
 }
 Lastfm.onLogoutClick = function(event) {
-  document.getElementById('lastfmDeck').selectedPanel =
-    document.getElementById('lastfmLogin');
+  this._deck.selectedPanel = this._login;
   this._service.logout();
 }
 
 /* profile click event handler */
 Lastfm.onProfileClick = function(event) {
   gBrowser.loadURI(this._service.profileurl, null, null, event);
-  document.getElementById('lastfmPanel').hidePopup();
+  this._panel.hidePopup();
 }
 
 /* last.fm event handlers for login events */
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
-  document.getElementById('lastfmDeck').selectedPanel =
-    document.getElementById('lastfmLoggingIn');
+  this._deck.selectedPanel = this._loggingIn;
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
-  document.getElementById('lastfmDeck').selectedPanel =
-    document.getElementById('lastfmLogin');
+  this._deck.selectedPanel = this._login;
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
-  document.getElementById('lastfmDeck').selectedPanel =
-    document.getElementById('lastfmLogin');
+  this._deck.selectedPanel = this._login;
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
-  document.getElementById('lastfmDeck').selectedPanel =
-    document.getElementById('lastfmProfile');
+  this._deck.selectedPanel = this._profile;
 }
 
 /* last.fm profile changed */
 Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
-  document.getElementById('lastfmImage').setAttribute('src',
+  this._image.setAttribute('src',
       this._service.avatar);
-  document.getElementById('lastfmRealname').textContent =
+  this._realname.textContent =
     this._service.realname;
-  document.getElementById('lastfmTracks').textContent = this._service.playcount;
+  this._tracks.textContent = this._service.playcount;
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

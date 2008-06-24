@@ -140,7 +140,7 @@ function sbLastFm_login() {
     // download profile info
     self.updateProfile(function success() {
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
-  }, function failure() {
+    }, function failure() {
       self.listeners.each(function(l) { l.onLoginFailed(); });
     });
   }, function failure() {

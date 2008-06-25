@@ -111,7 +111,7 @@ Lastfm.onLogoutClick = function(event) {
 
 // profile click event handler
 Lastfm.onProfileClick = function(event) {
-  gBrowser.loadURI(this._service.profileurl, null, null, event);
+  gBrowser.loadURI(this._service.profileurl, null, null, event, '_blank');
   this._panel.hidePopup();
 }
 

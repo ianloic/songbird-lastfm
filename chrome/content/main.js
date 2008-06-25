@@ -104,6 +104,8 @@ Lastfm.onCancelClick = function(event) {
 Lastfm.onLogoutClick = function(event) {
   this._deck.selectedPanel = this._login;
   this.setLoginError(null);
+  this.setStatusIcon(ICON_DISABLED);
+  this.setStatusText('Logged out, click to log in');
   this._service.logout();
 }
 

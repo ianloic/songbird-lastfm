@@ -26,9 +26,8 @@ function lastfmLogins() {
 
 // calculate a hex md5 digest thing
 function md5(str) {
-  var converter =
-    Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
-      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+  var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+      .createInstance(Ci.nsIScriptableUnicodeConverter);
 
   converter.charset = "UTF-8";
   // result is an out parameter,
@@ -36,15 +35,13 @@ function md5(str) {
   var result = {};
   // data is an array of bytes
   var data = converter.convertToByteArray(str, result);
-  var ch = Components.classes["@mozilla.org/security/hash;1"]
-                     .createInstance(Components.interfaces.nsICryptoHash);
+  var ch = Cc["@mozilla.org/security/hash;1"].createInstance(Ci.nsICryptoHash);
   ch.init(ch.MD5);
   ch.update(data, data.length);
   var hash = ch.finish(false);
 
   // return the two-digit hexadecimal code for a byte
-  function toHexString(charCode)
-  {
+  function toHexString(charCode) {
     return ("0" + charCode.toString(16)).slice(-2);
   }
 

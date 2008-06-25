@@ -1,8 +1,8 @@
 
-const ICON_BUSY = 'chrome://lastfm/skin/as.png';
-const ICON_LOGGED_OUT = 'chrome://lastfm/skin/as.png';
+const ICON_BUSY = 'chrome://lastfm/skin/busy.gif';
+const ICON_DISABLED = 'chrome://lastfm/skin/disabled.png';
 const ICON_LOGGED_IN = 'chrome://lastfm/skin/as.png';
-const ICON_ERROR = 'chrome://lastfm/skin/as.png';
+const ICON_ERROR = 'chrome://lastfm/skin/error.png';
 
 
 // Make a namespace.
@@ -37,6 +37,8 @@ Lastfm.onLoad = function() {
   this._username = document.getElementById('lastfmUsername');
   // login password field
   this._password = document.getElementById('lastfmPassword');
+  // login button
+  this._loginError = document.getElementById('lastfmLoginError');
   // login button
   this._loginButton = document.getElementById('lastfmLoginButton');
 
@@ -101,6 +103,7 @@ Lastfm.onCancelClick = function(event) {
 }
 Lastfm.onLogoutClick = function(event) {
   this._deck.selectedPanel = this._login;
+  this.setLoginError(null);
   this._service.logout();
 }
 
@@ -118,37 +121,49 @@ Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   this._deck.selectedPanel = this._login;
-  this.setStatusIcon(ICON_LOGGED_OUT);
+  this.setLoginError()
+  this.setStatusIcon(ICON_DISABLED);
   this.setStatusText('Click to log into Last.fm');
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
   this._deck.selectedPanel = this._login;
+  this.setLoginError('Login failed');
   this.setStatusIcon(ICON_ERROR);
   this.setStatusText('Login to Last.fm failed');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this._deck.selectedPanel = this._profile;
+  this.setLoginError(null);
   this.setStatusIcon(ICON_LOGGED_IN);
   this.setStatusText('Logged in and scrobbling.')
 }
 
 // last.fm profile changed
 Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
-  this._image.setAttribute('src',
-      this._service.avatar);
-  this._realname.textContent =
-    this._service.realname;
+  this._image.setAttribute('src', this._service.avatar);
+  this._realname.textContent = this._service.realname;
   this._tracks.textContent = this._service.playcount;
 }
 
+// update the status icon's icon
 Lastfm.setStatusIcon = function Lastfm_setStatusIcon(aIcon) {
-  // update the status icon's icon
   this._statusIcon.setAttribute('src', aIcon);
 }
 
+// update the status icon's text
 Lastfm.setStatusText = function Lastfm_setStatusText(aText) {
-  // update the status icon's text
   this._statusIcon.setAttribute('tooltiptext', aText);
+}
+
+// update the login error - pass null to clear the error message
+Lastfm.setLoginError = function Lastfm_setLoginError(aText) {
+  if (aText) {
+    this._loginError.textContent = aText;
+    this._loginError.style.display = '-moz-box';
+  } else {
+    this._loginError.textContent = '';
+    this._loginError.style.display = 'none';
+  }
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

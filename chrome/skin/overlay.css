@@ -6,6 +6,10 @@
   min-height: 2em;
 }
 
+#lastfmLoginError {
+  color: red;
+}
+
 #lastfmImage {
   width: 64px;
   height: 64px;

@@ -31,6 +31,7 @@
               </row>
             </rows>
           </grid>
+          <description id="lastfmLoginError"/>
           <spacer flex="1"/>
           <hbox>
             <spacer flex="1"/>

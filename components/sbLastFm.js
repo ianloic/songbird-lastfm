@@ -109,6 +109,16 @@ function sbLastFm() {
   this.session = null;
   this.nowplaying_url = null;
   this.submission_url = null;
+
+  // the should-we-scrobble pref
+  var prefsService = Cc['@mozilla.org/preferences-service;1']
+      .getService(Ci.nsIPrefBranch);
+  this.__defineGetter__('shouldScrobble', function() {
+    return prefsService.getBoolPref('extensions.lastfm.scrobble');
+  });
+  this.__defineSetter__('shouldScrobble', function(val) {
+    prefsService.setBoolPref('extensions.lastfm.scrobble', val);
+  });
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'

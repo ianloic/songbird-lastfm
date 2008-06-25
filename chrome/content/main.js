@@ -76,11 +76,13 @@ Lastfm.onLoad = function() {
   this._realname.addEventListener('click',
       function(event) { Lastfm.onProfileClick(event); }, false);
 
-  // copy the username & password out of the service
+  // copy the username & password out of the service into the UI
   this._username.value = this._service.username;
   this._password.value = this._service.password;
-  // if we have a username & password try to log in
-  if (this._service.username && this._service.password) {
+
+  // if we have a username & password and we're scrobbling, try to log in
+  if (this._service.username && this._service.password &&
+      this._service.shouldScrobble) {
     this._service.login();
   }
 }
@@ -105,8 +107,11 @@ Lastfm.onLogoutClick = function(event) {
   this._deck.selectedPanel = this._login;
   this.setLoginError(null);
   this.setStatusIcon(ICON_DISABLED);
-  this.setStatusText('Logged out, click to log in');
+  this.setStatusText('Logged out, scrobbling disabled, click to log in');
   this._service.logout();
+
+  // disable scrobbling
+  this._service.shouldScrobble = false;
 }
 
 // profile click event handler
@@ -138,6 +143,8 @@ Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this.setLoginError(null);
   this.setStatusIcon(ICON_LOGGED_IN);
   this.setStatusText('Logged in and scrobbling.')
+  // enable scrobbling
+  this._service.shouldScrobble = true;
 }
 
 // last.fm profile changed

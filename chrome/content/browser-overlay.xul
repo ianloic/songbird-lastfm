@@ -8,7 +8,7 @@
   <script src="main.js"/>
 
   <stringbundleset id="stringbundleset">
-     <stringbundle id="lastfm-strings" src="chrome://lastfm/locale/overlay.properties"/>
+     <stringbundle id="lastfmStrings" src="chrome://lastfm/locale/overlay.properties"/>
   </stringbundleset>
 
   <popupset id="mainPopupSet">

@@ -14,7 +14,7 @@ if (typeof Lastfm == 'undefined') {
 Lastfm.onLoad = function() {
   // the window has finished loading
   this._initialized = true;
-  this._strings = document.getElementById("lastfm-strings");
+  this._strings = document.getElementById("lastfmStrings");
 
   // get the XPCOM service as a JS object
   this._service = Components.classes['@songbirdnest.com/lastfm;1']
@@ -86,7 +86,7 @@ Lastfm.onLoad = function() {
     this._service.login();
   } else {
     this.setStatusIcon(ICON_DISABLED);
-    this.setStatusText('Click to log into Last.fm');
+    this.setStatusTextId('lastfm.status.disabled');
   }
 }
 
@@ -110,7 +110,7 @@ Lastfm.onLogoutClick = function(event) {
   this._deck.selectedPanel = this._login;
   this.setLoginError(null);
   this.setStatusIcon(ICON_DISABLED);
-  this.setStatusText('Logged out, scrobbling disabled, click to log in');
+  this.setStatusTextId('lastfm.status.disabled');
   this._service.logout();
 
   // disable scrobbling
@@ -127,25 +127,25 @@ Lastfm.onProfileClick = function(event) {
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this._deck.selectedPanel = this._loggingIn;
   this.setStatusIcon(ICON_BUSY);
-  this.setStatusText('Logging in to Last.fm');
+  this.setStatusTextId('lastfm.status.logging_in');
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   this._deck.selectedPanel = this._login;
   this.setLoginError()
   this.setStatusIcon(ICON_DISABLED);
-  this.setStatusText('Click to log into Last.fm');
+  this.setStatusTextId('lastfm.status.offline');
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
   this._deck.selectedPanel = this._login;
-  this.setLoginError('Login failed');
+  this.setLoginErrorId('lastfm.error.login_failed');
   this.setStatusIcon(ICON_ERROR);
-  this.setStatusText('Login to Last.fm failed');
+  this.setStatusTextId('lastfm.status.failed');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this._deck.selectedPanel = this._profile;
   this.setLoginError(null);
   this.setStatusIcon(ICON_LOGGED_IN);
-  this.setStatusText('Logged in and scrobbling.')
+  this.setStatusTextId('lastfm.status.logged_in')
   // enable scrobbling
   this._service.shouldScrobble = true;
 }
@@ -167,6 +167,11 @@ Lastfm.setStatusText = function Lastfm_setStatusText(aText) {
   this._statusIcon.setAttribute('tooltiptext', aText);
 }
 
+// update the status icon's text from the properties file by id
+Lastfm.setStatusTextId = function Lastfm_setStatusTextId(aId) {
+  this.setStatusText(this._strings.getString(aId));
+}
+
 // update the login error - pass null to clear the error message
 Lastfm.setLoginError = function Lastfm_setLoginError(aText) {
   if (aText) {
@@ -176,6 +181,11 @@ Lastfm.setLoginError = function Lastfm_setLoginError(aText) {
     this._loginError.textContent = '';
     this._loginError.style.display = 'none';
   }
+}
+
+// update the login error from the properties file by id
+Lastfm.setLoginErrorId = function Lastfm_setLoginErrorId(aId) {
+  this.setLoginError(this._strings.getString(aId));
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

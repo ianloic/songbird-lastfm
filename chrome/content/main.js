@@ -84,6 +84,9 @@ Lastfm.onLoad = function() {
   if (this._service.username && this._service.password &&
       this._service.shouldScrobble) {
     this._service.login();
+  } else {
+    this.setStatusIcon(ICON_DISABLED);
+    this.setStatusText('Click to log into Last.fm');
   }
 }
 

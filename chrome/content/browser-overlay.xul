@@ -71,7 +71,7 @@
       class="statusbarpanel-iconic"
       popup="lastfmPanel"
       context="lastfmPanel"
-      src="chrome://lastfm/skin/as.png"
+      src="chrome://lastfm/skin/disabled.png"
       tooltiptext=""
     />
   </statusbar>

@@ -16,6 +16,7 @@
     <menuitem id="lastfmMenuLogin" label="Log into Last.fm..."
       insertbefore="devToolsSeparator"/>
     <menuitem id="lastfmMenuEnableScrobbling" label="Enable scrobbling"
+              checked="true"
       insertbefore="devToolsSeparator"/>
   </menupopup>
 
@@ -43,6 +44,7 @@
           <description id="lastfmLoginError"/>
           <spacer flex="1"/>
           <hbox>
+            <description><html:span id="lastfmSignup">Sign up for Last.fm</html:span></description>
             <spacer flex="1"/>
             <button id="lastfmLoginButton">Log in</button>
           </hbox>
@@ -62,12 +64,15 @@
             <image id="lastfmImage" src="" />
             <vbox>
               <description id="lastfmRealnameContainer"><html:span id="lastfmRealname" /></description>
-              <description>Played <html:span id="lastfmTracks" /> tracks</description>
+              <description style="display:none">Played <html:span id="lastfmTracks" /> tracks</description>
+              <description>Scrobbling <html:span id="lastfmNextTrack">Track Name</html:span>
+              in <html:span id="lastfmNextTime">0:30</html:span>s.</description>
+              <description id="lastfmJoinGroup">Songbird on Last.fm</description>
             </vbox>
           </hbox>
           <spacer flex="1"/>
           <hbox>
-            <checkbox id="lastfmScrobble" label="Scrobble my tracks" />
+            <checkbox id="lastfmScrobble" label="Scrobble my tracks" checked="true" />
             <spacer flex="1"/>
             <button id="lastfmLogoutButton">Log out</button>
           </hbox>

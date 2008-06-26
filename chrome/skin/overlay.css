@@ -6,10 +6,18 @@
   min-height: 2em;
 }
 
+#lastfmSignup {
+  text-decoration: underline;
+}
+#lastfmSignup#hover {
+  color: blue;
+}
+
 #lastfmLoginError {
   color: red;
 }
 
+/* the avatar image */
 #lastfmImage {
   width: 64px;
   height: 64px;
@@ -19,11 +27,22 @@
   border-color: blue;
 }
 
+/* the real name field */
 #lastfmRealname {
   font-weight: bold;
 }
-
 #lastfmRealname:hover {
+  color: blue;
+  text-decoration: underline;
+}
+
+/* the next scrobbling line */
+#lastfmNextTrack, #lastfmNextTime {
+  font-style: italic;
+}
+
+/* the Songbird group on Lastfm */
+#lastfmJoinGroup:hover {
   color: blue;
   text-decoration: underline;
 }

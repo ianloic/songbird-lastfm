@@ -80,6 +80,9 @@ Lastfm.onLoad = function() {
   this._username.value = this._service.username;
   this._password.value = this._service.password;
 
+  // clear the login error message
+  this.setLoginError(null);
+
   // if we have a username & password and we're scrobbling, try to log in
   if (this._service.username && this._service.password &&
       this._service.shouldScrobble) {

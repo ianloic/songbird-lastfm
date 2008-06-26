@@ -8,7 +8,7 @@
   <script src="main.js"/>
 
   <stringbundleset id="stringbundleset">
-     <stringbundle id="lastfmStrings" src="chrome://lastfm/locale/overlay.properties"/>
+    <stringbundle id="lastfmStrings" src="chrome://lastfm/locale/overlay.properties"/>
   </stringbundleset>
 
   <menupopup id="menu_ToolsPopup">
@@ -67,7 +67,7 @@
               <description style="display:none">Played <html:span id="lastfmTracks" /> tracks</description>
               <description>Scrobbling <html:span id="lastfmNextTrack">Track Name</html:span>
               in <html:span id="lastfmNextTime">0:30</html:span>s.</description>
-              <description id="lastfmJoinGroup">Songbird on Last.fm</description>
+              <description><html:span id="lastfmJoinGroup">Join the Songbird on Last.fm</html:span></description>
             </vbox>
           </hbox>
           <spacer flex="1"/>

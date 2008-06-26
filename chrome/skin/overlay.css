@@ -9,7 +9,7 @@
 #lastfmSignup {
   text-decoration: underline;
 }
-#lastfmSignup#hover {
+#lastfmSignup:hover {
   color: blue;
 }
 

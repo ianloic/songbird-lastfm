@@ -27,3 +27,9 @@
   color: blue;
   text-decoration: underline;
 }
+
+
+/* hide the real name field */
+#lastfmRealnameContainer {
+  display: none;
+}

@@ -61,7 +61,7 @@
           <hbox>
             <image id="lastfmImage" src="" />
             <vbox>
-              <description><html:span id="lastfmRealname" /></description>
+              <description id="lastfmRealnameContainer"><html:span id="lastfmRealname" /></description>
               <description>Played <html:span id="lastfmTracks" /> tracks</description>
             </vbox>
           </hbox>

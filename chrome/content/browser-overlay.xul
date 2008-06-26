@@ -67,6 +67,7 @@
           </hbox>
           <spacer flex="1"/>
           <hbox>
+            <checkbox id="lastfmScrobble" label="Scrobble my tracks" />
             <spacer flex="1"/>
             <button id="lastfmLogoutButton">Log out</button>
           </hbox>

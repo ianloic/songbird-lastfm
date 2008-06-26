@@ -11,6 +11,15 @@
      <stringbundle id="lastfmStrings" src="chrome://lastfm/locale/overlay.properties"/>
   </stringbundleset>
 
+  <menupopup id="menu_ToolsPopup">
+    <menuseparator id="lastfmMenuSeparator" insertbefore="devToolsSeparator"/>
+    <menuitem id="lastfmMenuLogin" label="Log into Last.fm..."
+      insertbefore="devToolsSeparator"/>
+    <menuitem id="lastfmMenuEnableScrobbling" label="Enable scrobbling"
+      insertbefore="devToolsSeparator"/>
+  </menupopup>
+
+
   <popupset id="mainPopupSet">
     <panel id="lastfmPanel" position="before_end">
       <deck id="lastfmDeck">

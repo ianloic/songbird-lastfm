@@ -14,10 +14,9 @@
   <menupopup id="menu_ToolsPopup">
     <menuseparator id="lastfmMenuSeparator" insertbefore="devToolsSeparator"/>
     <menuitem id="lastfmMenuLogin" label="Log into Last.fm..."
-      insertbefore="devToolsSeparator"/>
+              insertbefore="devToolsSeparator"/>
     <menuitem id="lastfmMenuEnableScrobbling" label="Enable scrobbling"
-              checked="true"
-      insertbefore="devToolsSeparator"/>
+              type="checkbox" insertbefore="devToolsSeparator"/>
   </menupopup>
 
 
@@ -67,7 +66,7 @@
               <description style="display:none">Played <html:span id="lastfmTracks" /> tracks</description>
               <description>Scrobbling <html:span id="lastfmNextTrack">Track Name</html:span>
               in <html:span id="lastfmNextTime">0:30</html:span>s.</description>
-              <description><html:span id="lastfmJoinGroup">Join the Songbird on Last.fm</html:span></description>
+              <description><html:span id="lastfmJoinGroup">Join the Songbird group on Last.fm</html:span></description>
             </vbox>
           </hbox>
           <spacer flex="1"/>

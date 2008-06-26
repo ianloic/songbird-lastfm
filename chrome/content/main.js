@@ -22,6 +22,11 @@ Lastfm.onLoad = function() {
 
   // get references to our pieces of ui
 
+  // menu items
+  this._menuLogin = document.getElementById('lastfmMenuLogin');
+  this._menuEnableScrobbling =
+    document.getElementById('lastfmMenuEnableScrobbling');
+
   // statusbar icon
   this._statusIcon = document.getElementById('lastfmStatusIcon');
 
@@ -57,10 +62,18 @@ Lastfm.onLoad = function() {
   this._realname = document.getElementById('lastfmRealname');
   // profile tracks
   this._tracks = document.getElementById('lastfmTracks');
+  // enable-scrobbling checkbox
+  this._scrobble = document.getElementById('lastfmScrobble');
 
 
   // listen to events from our Last.fm service
   this._service.listeners.add(this);
+
+  // wire up UI events for the menu items
+  this._menuLogin.addEventListener('command',
+      function(event) { Lastfm.onMenuLogin(event); }, false);
+  this._menuEnableScrobbling.addEventListener('command',
+      function(event) { Lastfm.onMenuEnableScrobbling(event); }, false);
 
   // wire up UI events for the buttons
   this._loginButton.addEventListener('command',
@@ -76,16 +89,23 @@ Lastfm.onLoad = function() {
   this._realname.addEventListener('click',
       function(event) { Lastfm.onProfileClick(event); }, false);
 
+  // ui event for the should-scrobble checkbox
+  this._scrobble.addEventListener('command',
+      function(event) { Lastfm.onScrobbleCheckbox(event); }, false);
+
   // copy the username & password out of the service into the UI
   this._username.value = this._service.username;
   this._password.value = this._service.password;
 
   // clear the login error message
   this.setLoginError(null);
-
+  // update the ui with the should-scrobble state
+  this.onShouldScrobbleChanged(this._service.shouldScrobble);
+  // disable the scrobbling menu item
+  this._menuEnableScrobbling.setAttribute('disabled', 'true');
+  
   // if we have a username & password and we're scrobbling, try to log in
-  if (this._service.username && this._service.password &&
-      this._service.shouldScrobble) {
+  if (this._service.username && this._service.password) {
     this._service.login();
   } else {
     this.setStatusIcon(ICON_DISABLED);
@@ -98,6 +118,21 @@ Lastfm.onUnLoad = function() {
   // the window is about to close
   this._initialized = false;
   this._service.listeners.remove(this);
+}
+
+// menu event handlers
+Lastfm.onMenuLogin = function(event) {
+  // this is either a login or a logout item, depending on the state.
+  if (this._service.loggedIn) {
+    // if we're already logged in, just log out
+    this._service.logout();
+  } else {
+    // if we're not logged in, show the login panel
+    this._panel.openPopup(this._statusIcon);
+  }
+}
+Lastfm.onMenuEnableScrobbling = function(event) {
+  this._service.shouldScrobble = !this._service.shouldScrobble;
 }
 
 // button event handlers
@@ -115,15 +150,17 @@ Lastfm.onLogoutClick = function(event) {
   this.setStatusIcon(ICON_DISABLED);
   this.setStatusTextId('lastfm.status.disabled');
   this._service.logout();
-
-  // disable scrobbling
-  this._service.shouldScrobble = false;
 }
 
 // profile click event handler
 Lastfm.onProfileClick = function(event) {
   gBrowser.loadURI(this._service.profileurl, null, null, event, '_blank');
   this._panel.hidePopup();
+}
+
+// should-scrobble checkbox handler
+Lastfm.onScrobbleCheckbox = function(event) {
+  this._service.shouldScrobble = !this._service.shouldScrobble;
 }
 
 // last.fm event handlers for login events
@@ -133,24 +170,43 @@ Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this.setStatusTextId('lastfm.status.logging_in');
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
+  // switch to the login panel
   this._deck.selectedPanel = this._login;
+  // clear the login error
   this.setLoginError()
+
+  // set the status icon
   this.setStatusIcon(ICON_DISABLED);
   this.setStatusTextId('lastfm.status.offline');
+
+  // disable the scrobbling menu item
+  this._menuEnableScrobbling.setAttribute('disabled', 'true');
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
+  // switch back to the login panel
   this._deck.selectedPanel = this._login;
+  // set the login error message
   this.setLoginErrorId('lastfm.error.login_failed');
+
+  // set the status icon
   this.setStatusIcon(ICON_ERROR);
   this.setStatusTextId('lastfm.status.failed');
+
+  // disable the scrobbling menu item
+  this._menuEnableScrobbling.setAttribute('disabled', 'true');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
+  // main screen turn on
   this._deck.selectedPanel = this._profile;
+  // clear the login error
   this.setLoginError(null);
+
+  // set the status icon
   this.setStatusIcon(ICON_LOGGED_IN);
   this.setStatusTextId('lastfm.status.logged_in')
-  // enable scrobbling
-  this._service.shouldScrobble = true;
+
+  // enable the scrobbling menuitem
+  this._menuEnableScrobbling.removeAttribute('disabled');
 }
 
 // last.fm profile changed
@@ -158,6 +214,18 @@ Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
   this._image.setAttribute('src', this._service.avatar);
   this._realname.textContent = this._service.realname;
   this._tracks.textContent = this._service.playcount;
+}
+
+// shouldScrobble changed
+Lastfm.onShouldScrobbleChanged = function Lastfm_onShouldScrobbleChanged(val) {
+  if (val) {
+    this._menuEnableScrobbling.setAttribute('checked', 'true');
+    this._scrobble.setAttribute('checked', 'true');
+  } else {
+    this._menuEnableScrobbling.removeAttribute('checked');
+    this._scrobble.removeAttribute('checked');
+  }
+  // FIXME change the status icon?
 }
 
 // update the status icon's icon

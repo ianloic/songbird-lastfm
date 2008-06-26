@@ -118,6 +118,7 @@ function sbLastFm() {
   });
   this.__defineSetter__('shouldScrobble', function(val) {
     prefsService.setBoolPref('extensions.lastfm.scrobble', val);
+    this.listeners.each(function(l) { l.onShouldScrobbleChanged(val); });
   });
 }
 // XPCOM Magic

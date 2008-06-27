@@ -47,8 +47,11 @@
   text-decoration: underline;
 }
 
+#lastfmNextContainer.disabled {
+  display: none;
+}
 
 /* hide the real name field */
 #lastfmRealnameContainer {
-  display: none;
+  /*display: none;*/
 }

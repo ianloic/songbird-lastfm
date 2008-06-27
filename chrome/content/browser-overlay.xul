@@ -63,10 +63,9 @@
             <image id="lastfmImage" src="" />
             <vbox>
               <description id="lastfmRealnameContainer"><html:span id="lastfmRealname" /></description>
-              <description style="display:none">Played <html:span id="lastfmTracks" /> tracks</description>
-              <description>Scrobbling <html:span id="lastfmNextTrack">Track Name</html:span>
+              <description >Played <html:span id="lastfmTracks" /> tracks</description>
+              <description id="lastfmNextContainer">Scrobbling <html:span id="lastfmNextTrack">Track Name</html:span>
               in <html:span id="lastfmNextTime">0:30</html:span>s.</description>
-              <description><html:span id="lastfmJoinGroup">Join the Songbird group on Last.fm</html:span></description>
             </vbox>
           </hbox>
           <spacer flex="1"/>
@@ -83,7 +82,6 @@
   <statusbar id="status-bar">
     <statusbarpanel id="lastfmStatusIcon"
       class="statusbarpanel-iconic"
-      popup="lastfmPanel"
       context="lastfmPanel"
       src="chrome://lastfm/skin/disabled.png"
       tooltiptext=""

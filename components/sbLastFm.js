@@ -110,6 +110,9 @@ function sbLastFm() {
   this.nowplaying_url = null;
   this.submission_url = null;
 
+  // logged in state
+  this.loggedIn = false;
+
   // the should-we-scrobble pref
   var prefsService = Cc['@mozilla.org/preferences-service;1']
       .getService(Ci.nsIPrefBranch);
@@ -148,14 +151,18 @@ function sbLastFm_login() {
     // download profile info
     self.updateProfile(function success() {
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
+      self.listeners.each(function(l) { l.onOnline(); });
     }, function failure() {
       self.listeners.each(function(l) { l.onLoginFailed(); });
+      self.listeners.each(function(l) { l.onOffline(); });
     });
   }, function failure() {
     // FIXME: actually, we need some kind of retry / error reporting
     self.listeners.each(function(l) { l.onLoginFailed(); });
+    self.listeners.each(function(l) { l.onOffline(); });
   }, function auth_failure() {
     self.listeners.each(function(l) { l.onLoginFailed(); });
+    self.listeners.each(function(l) { l.onOffline(); });
   });
 }
 sbLastFm.prototype.cancelLogin =

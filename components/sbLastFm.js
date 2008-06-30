@@ -150,6 +150,7 @@ function sbLastFm_login() {
         LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
     // download profile info
     self.updateProfile(function success() {
+      self.loggedIn = true;
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
       self.listeners.each(function(l) { l.onOnline(); });
     }, function failure() {
@@ -179,6 +180,7 @@ function sbLastFm_logout() {
   this.session = null;
   this.nowplaying_url = null;
   this.submission_url = null;
+  this.loggedIn = false;
 }
 
 // do the handshake

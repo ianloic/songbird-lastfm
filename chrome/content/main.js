@@ -73,7 +73,16 @@ Lastfm.onLoad = function() {
 
   // wire up UI events for the menu items
   this._menuLogin.addEventListener('command',
-      function(event) { Lastfm.onMenuLogin(event); }, false);
+      function(event) {
+        // this is either a login or a logout item, depending on the state.
+        if (Lastfm._service.loggedIn) {
+          // if we're already logged in, just log out
+          Lastfm._service.logout();
+        } else {
+          // if we're not logged in, show the login panel
+          Lastfm.showPanel();
+        }
+      }, false);
   this._menuEnableScrobbling.addEventListener('command',
       function(event) { Lastfm.toggleShouldScrobble(); }, false);
 
@@ -82,8 +91,13 @@ Lastfm.onLoad = function() {
       function(event) {
         // only listen to the left mouse button
         if (event.button != 0) return;
-        //if (this._service.loggedIn)
-        Lastfm.toggleShouldScrobble();
+        if (Lastfm._service.loggedIn) {
+          // if we're logged in, toggle the scrobble state
+          Lastfm.toggleShouldScrobble();
+        } else {
+          // or show the login panel
+          Lastfm.showPanel();
+        }
       }, false);
 
   // wire up UI events for the buttons
@@ -131,20 +145,11 @@ Lastfm.onUnLoad = function() {
   this._service.listeners.remove(this);
 }
 
-// menu event handlers
-Lastfm.onMenuLogin = function(event) {
-  // this is either a login or a logout item, depending on the state.
-  if (this._service.loggedIn) {
-    // if we're already logged in, just log out
-    this._service.logout();
-  } else {
-    // if we're not logged in, show the login panel
-    this._panel.openPopup(this._statusIcon);
-  }
+
+Lastfm.showPanel = function Lastfm_showPanel() {
+  this._panel.openPopup(this._statusIcon);
 }
-Lastfm.onMenuEnableScrobbling = function(event) {
-  this._service.shouldScrobble = !this._service.shouldScrobble;
-}
+
 
 // button event handlers
 Lastfm.onLoginClick = function(event) {

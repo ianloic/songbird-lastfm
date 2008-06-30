@@ -18,6 +18,17 @@ const LOGIN_FORMURL = 'https://www.last.fm';
 const LOGIN_FIELD_USERNAME = 'username';
 const LOGIN_FIELD_PASSWORD = 'password';
 
+// helper for enumerating enumerators. duh.
+function enumerate(enumerator, func) {
+  while(enumerator.hasMoreEntries()) {
+    try {
+      func(enumerator.getNext());
+    } catch(e) {
+      Cu.reportError(e);
+    }
+  }
+}
+
 // helper for getting the set of relevant logins
 function lastfmLogins() {
   return loginManager.findLogins({}, LOGIN_HOSTNAME, LOGIN_FORMURL,
@@ -123,13 +134,22 @@ function sbLastFm() {
     prefsService.setBoolPref('extensions.lastfm.scrobble', val);
     this.listeners.each(function(l) { l.onShouldScrobbleChanged(val); });
   });
+
+  // add ourselves as a playlist playback listener
+  Cc['@songbirdnest.com/Songbird/PlaylistPlayback;1']
+      .getService(Ci.sbIPlaylistPlayback).addListener(this);
+
+  this._playbackHistory =
+      Cc['@songbirdnest.com/Songbird/PlaybackHistoryService;1']
+      .getService(Ci.sbIPlaybackHistoryService);
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
 sbLastFm.prototype.contractID = '@songbirdnest.com/lastfm;1';
 sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
-sbLastFm.prototype.QueryInterface = XPCOMUtils.generateQI([]);
+sbLastFm.prototype.QueryInterface =
+    XPCOMUtils.generateQI([Components.interfaces.sbIPlaylistPlaybackListener]);
 
 // login functionality
 sbLastFm.prototype.login =
@@ -311,6 +331,34 @@ sbLastFm.prototype.post =
 function sbLastFm_post(url, args, success, failure) {
   // do stuff
 }
+
+
+// sbIPlaylistPlaybackListener
+sbLastFm.prototype.onStop = function sbLastFm_onStop() {
+  try {
+  dump('sbLastFm.onStop()\n');
+  dump('entries: '+this._playbackHistory.entries+'\n');
+  dump('entries.hasMoreElements(): '+this._playbackHistory.entries.hasMoreElements()+'\n');
+  enumerate(this._playbackHistory.entries,
+            function(e) {
+              e.QueryInterface(Ci.sbIPlaybackHistoryEntry);
+              dump(' history entry: '+e+'\n');
+            });
+  } catch(e) { Cu.reportError(e); }
+}
+sbLastFm.prototype.onBeforeTrackChange =
+function sbLastFm_onBeforeTrackChange(aItem, aView, aIndex) {
+  dump('sbLastFm.onBeforeTrackChange('+aItem+')\n');
+}
+sbLastFm.prototype.onTrackChange =
+function sbLastFm_onTrackChange(aItem, aView, aIndex) {
+  dump('sbLastFm.onTrackChange('+aItem+')\n');
+  // ugh - we need to add our own entries to the history service now
+  // this will go away once Aus is done
+  this._playbackHistory.createEntry(aItem, (new Date()).getTime(), 1000, null);
+  dump('added a history entry\n');
+}
+
 
 
 function NSGetModule(compMgr, fileSpec) {

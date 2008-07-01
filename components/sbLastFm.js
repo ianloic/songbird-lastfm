@@ -392,7 +392,7 @@ function sbLastFm_post(url, body, success, failure, badsession) {
     }
   };
   xhr.onerror = function(event) {
-    /* loaded */
+    /* errored */
     Cu.reportError('Received error posting to last.fm');
   };
   xhr.open('POST', url, true);

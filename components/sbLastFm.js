@@ -8,6 +8,9 @@ const Cu = Components.utils;
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+// import the properites helper
+Components.utils.import("resource://app/jsmodules/sbProperties.jsm");
+
 // login manager
 const loginManager = Cc["@mozilla.org/login-manager;1"]
     .getService(Ci.nsILoginManager);
@@ -88,6 +91,27 @@ Listeners.prototype.each = function Listeners_each(aCallback) {
       Cu.reportError(e);
     }
   }
+}
+
+
+// an object that represents a played track for sending to Last.fm
+function PlayedTrack(mediaItem, timestamp, rating, source) {
+  // apply defaults
+  if (!rating) rating = ''; // no rating
+  if (!source) source = 'P'; // user picked
+
+  // copy properties out of the media item
+  this.a = mediaItem.getProperty(SBProperties.artistName);
+  this.t = mediaItem.getProperty(SBProperties.trackName);
+  this.b = mediaItem.getProperty(SBProperties.albumName);
+  this.n = mediaItem.getProperty(SBProperties.trackNumber);
+  this.l = Math.round(parseInt(
+      mediaItem.getProperty(SBProperties.duration))/1000000);
+
+  // attach info that was passed in
+  this.r = rating;
+  this.o = source;
+  this.i = timestamp
 }
 
 
@@ -241,9 +265,9 @@ function sbLastFm_handshake(success, failure, auth_failure) {
       failure();
       return;
     }
-    this.sessionid = response_lines[1];
-    this.nowplaying_url = response_lines[2];
-    this.submission_url = response_lines[3];
+    self.session = response_lines[1];
+    self.nowplaying_url = response_lines[2];
+    self.submission_url = response_lines[3];
     success();
   };
   this._handshake_xhr.onerror = function(event) {
@@ -299,7 +323,26 @@ function sbLastFm_nowPlaying(artist, track, album, length, trackno) {
 }
 */
 
-
+// the first argument is an array of object, each with one-letter keys
+// corresponding to the audioscrobbler submission protocol keys - ie:
+// a=artist, t=track, i=start-time, l=track-length, b=album, n=track-number
+// the PlayedTrack object implements this
+sbLastFm.prototype.submit =
+function sbLastFm_submit(submissions, success, failure) {
+  // build the submission
+  var url = this.nowplaying_url;
+  var body = 's=' + encodeURIComponent(this.session);
+  var props = 'atilbn';
+  for (var i=0; i<submissions.length; i++) {
+    for (var j=0; j<props.length; j++) {
+      body += '&' + props[j] + '[' + i + ']=' +
+        encodeURIComponent(submissions[i][props[j]]);
+    }
+  }
+  dump('url: '+url+'\n');
+  dump('body: '+body+'\n');
+  success();
+}
 
 // get XML from an URL
 sbLastFm.prototype.getXML =
@@ -349,6 +392,9 @@ sbLastFm.prototype.onStop = function sbLastFm_onStop() {
 sbLastFm.prototype.onBeforeTrackChange =
 function sbLastFm_onBeforeTrackChange(aItem, aView, aIndex) {
   dump('sbLastFm.onBeforeTrackChange('+aItem+')\n');
+  var now = (new Date()).getTime();
+  this.submit([new PlayedTrack(aItem, now)],
+              function() { }, function() { });
 }
 sbLastFm.prototype.onTrackChange =
 function sbLastFm_onTrackChange(aItem, aView, aIndex) {

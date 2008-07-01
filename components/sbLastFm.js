@@ -309,21 +309,20 @@ function sbLastFm_updateProfile(succeeded, failed) {
 
 
 // set now playing for the current user
-/*
-
+// the first argument is an array of object, each with one-letter keys
+// corresponding to the audioscrobbler submission protocol keys - ie:
+// a=artist, t=track, l=track-length, b=album, n=track-number
+// the PlayedTrack object implements this
 sbLastFm.prototype.nowPlaying =
-function sbLastFm_nowPlaying(artist, track, album, length, trackno) {
+function sbLastFm_nowPlaying(submission) {
   var url = this.nowplaying_url;
-  var body = 's=' + encodeURIComponent(this.session) +
-    '&a=' + encodeURIComponent(artist) +
-    '&t=' + encodeURIComponent(track) +
-    '&b=' + encodeURIComponent(album) +
-    '&l=' + encodeURIComponent(length) +
-    '&n=' + encodeURIComponent(trackno) +
-    '&m=';
-  this.post(url, body, ...);
+  var body = 's=' + encodeURIComponent(this.session);
+  var props = 'atblnm'; // the keys we send
+  for (var j=0; j<props.length; j++) {
+    body += '&' + props[j] + '=' + encodeURIComponent(submission[props[j]]);
+  }
+  this.post(url, body, success, failure);
 }
-*/
 
 // the first argument is an array of object, each with one-letter keys
 // corresponding to the audioscrobbler submission protocol keys - ie:
@@ -341,8 +340,6 @@ function sbLastFm_submit(submissions, success, failure) {
         encodeURIComponent(submissions[i][props[j]]);
     }
   }
-  dump('url: '+url+'\n');
-  dump('body: '+body+'\n');
   this.post(url, body, success, failure);
 }
 

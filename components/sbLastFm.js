@@ -107,11 +107,13 @@ function PlayedTrack(mediaItem, timestamp, rating, source) {
   this.n = mediaItem.getProperty(SBProperties.trackNumber);
   this.l = Math.round(parseInt(
       mediaItem.getProperty(SBProperties.duration))/1000000);
+  // pull the musicbrainz id when we have a standard sb property for that...
+  this.m = '';
 
   // attach info that was passed in
   this.r = rating;
   this.o = source;
-  this.i = timestamp
+  this.i = timestamp;
 }
 
 
@@ -330,9 +332,9 @@ function sbLastFm_nowPlaying(artist, track, album, length, trackno) {
 sbLastFm.prototype.submit =
 function sbLastFm_submit(submissions, success, failure) {
   // build the submission
-  var url = this.nowplaying_url;
+  var url = this.submission_url;
   var body = 's=' + encodeURIComponent(this.session);
-  var props = 'atilbn';
+  var props = 'brainmolt'; // the keys we send
   for (var i=0; i<submissions.length; i++) {
     for (var j=0; j<props.length; j++) {
       body += '&' + props[j] + '[' + i + ']=' +
@@ -341,7 +343,7 @@ function sbLastFm_submit(submissions, success, failure) {
   }
   dump('url: '+url+'\n');
   dump('body: '+body+'\n');
-  success();
+  this.post(url, body, success, failure);
 }
 
 // get XML from an URL
@@ -371,8 +373,49 @@ function sbLastFm_getXML(url, success, failure) {
 
 // post to last.fm
 sbLastFm.prototype.post =
-function sbLastFm_post(url, args, success, failure) {
-  // do stuff
+function sbLastFm_post(url, body, success, failure) {
+  var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
+  xhr.mozBackgroundRequest = true;
+  var self = this;
+  xhr.onload = function(event) {
+    /* loaded */
+    if (xhr.status != 200) {
+      Cu.reportError('status: '+xhr.status);
+      failure();
+      return;
+    }
+    dump (xhr.responseText.toSource()+'\n');
+    if (xhr.responseText.match(/^OK\n/)) {
+      success();
+      return;
+    }
+    /*
+    var response_lines = xhr.responseText.split('\n');
+    if (response_lines.length < 4) {
+      Cu.reportError('not enough lines: '+response_lines.toSource());
+      failure();
+      return;
+    }
+    if (response_lines[0] == 'BADAUTH') {
+      Co.reportError('auth failed');
+      auth_failure();
+      return;
+    }
+    if (response_lines[0] != 'OK') {
+      Co.reportError('handshake failure: '+response_lines[0]);
+      failure();
+      return;
+    }
+    */
+    success();
+  };
+  xhr.onerror = function(event) {
+    /* loaded */
+    Cu.reportError('errored');
+  };
+  xhr.open('POST', url, true);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.send(body);
 }
 
 
@@ -392,8 +435,8 @@ sbLastFm.prototype.onStop = function sbLastFm_onStop() {
 sbLastFm.prototype.onBeforeTrackChange =
 function sbLastFm_onBeforeTrackChange(aItem, aView, aIndex) {
   dump('sbLastFm.onBeforeTrackChange('+aItem+')\n');
-  var now = (new Date()).getTime();
-  this.submit([new PlayedTrack(aItem, now)],
+  var timestamp = Math.round(Date.now()/1000).toString();
+  this.submit([new PlayedTrack(aItem, timestamp)],
               function() { }, function() { });
 }
 sbLastFm.prototype.onTrackChange =

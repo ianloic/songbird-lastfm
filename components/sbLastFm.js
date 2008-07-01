@@ -373,45 +373,27 @@ function sbLastFm_getXML(url, success, failure) {
 
 // post to last.fm
 sbLastFm.prototype.post =
-function sbLastFm_post(url, body, success, failure) {
+function sbLastFm_post(url, body, success, failure, badsession) {
   var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
   xhr.mozBackgroundRequest = true;
-  var self = this;
   xhr.onload = function(event) {
     /* loaded */
     if (xhr.status != 200) {
-      Cu.reportError('status: '+xhr.status);
+      Cu.reportError('HTTP Error posting to last.fm: '+xhr.status);
       failure();
-      return;
-    }
-    dump (xhr.responseText.toSource()+'\n');
-    if (xhr.responseText.match(/^OK\n/)) {
+    } else if (xhr.responseText.match(/^OK\n/)) {
       success();
-      return;
-    }
-    /*
-    var response_lines = xhr.responseText.split('\n');
-    if (response_lines.length < 4) {
-      Cu.reportError('not enough lines: '+response_lines.toSource());
+    } else if (xhr.responseText.match(/^BADSESSION\n/)) {
+      Cu.reportError('Bad Session when posting to last.fm');
+      badsession();
+    } else {
+      Cu.reportError('Error posting to last.fm: ' + xhr.responseText);
       failure();
-      return;
     }
-    if (response_lines[0] == 'BADAUTH') {
-      Co.reportError('auth failed');
-      auth_failure();
-      return;
-    }
-    if (response_lines[0] != 'OK') {
-      Co.reportError('handshake failure: '+response_lines[0]);
-      failure();
-      return;
-    }
-    */
-    success();
   };
   xhr.onerror = function(event) {
     /* loaded */
-    Cu.reportError('errored');
+    Cu.reportError('Received error posting to last.fm');
   };
   xhr.open('POST', url, true);
   xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

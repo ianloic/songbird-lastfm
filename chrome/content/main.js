@@ -64,8 +64,8 @@ Lastfm.onLoad = function() {
   this._tracks = document.getElementById('lastfmTracks');
   // enable-scrobbling checkbox
   this._scrobble = document.getElementById('lastfmScrobble');
-  // the container for the "next scrobble" message
-  this._nextContainer = document.getElementById('lastfmNextContainer');
+  // the currently playing element
+  this._currently = document.getElementById('lastfmCurrently');
 
 
   // listen to events from our Last.fm service
@@ -113,6 +113,8 @@ Lastfm.onLoad = function() {
       function(event) { Lastfm.onProfileClick(event); }, false);
   this._realname.addEventListener('click',
       function(event) { Lastfm.onProfileClick(event); }, false);
+  this._tracks.addEventListener('click',
+      function(event) { Lastfm.onChartsClick(event); }, false);
 
   // ui event for the should-scrobble checkbox
   this._scrobble.addEventListener('command',
@@ -173,6 +175,13 @@ Lastfm.onProfileClick = function(event) {
   gBrowser.loadURI(this._service.profileurl, null, null, event, '_blank');
   this._panel.hidePopup();
 }
+// charts click handler
+Lastfm.onChartsClick = function(event) {
+  http://www.last.fm/user/ianloictest/charts/
+  gBrowser.loadURI('http://www.last.fm/user/'+this._service.username+'/charts/',
+                   null, null, event, '_blank');
+  this._panel.hidePopup();
+}
 
 Lastfm.toggleShouldScrobble = function() {
   this._service.shouldScrobble = !this._service.shouldScrobble;
@@ -224,7 +233,11 @@ Lastfm.onOffline = function Lastfm_onOffline() {
 // last.fm profile changed
 Lastfm.onProfileUpdated = function Lastfm_onProfileUpdated() {
   this._image.setAttribute('src', this._service.avatar);
-  this._realname.textContent = this._service.realname;
+  if (this._service.realname && this._service.realname.length) {
+    this._realname.textContent = this._service.realname;
+  } else {
+    this._realname.textContent = this._service.username;
+  }
   this._tracks.textContent = this._service.playcount;
 }
 
@@ -233,12 +246,12 @@ Lastfm.onShouldScrobbleChanged = function Lastfm_onShouldScrobbleChanged(val) {
   if (val) {
     this._menuEnableScrobbling.setAttribute('checked', 'true');
     this._scrobble.setAttribute('checked', 'true');
-    this._nextContainer.className='';
+    //this._nextContainer.className='';
     this.setStatusIcon(ICON_LOGGED_IN);
   } else {
     this._menuEnableScrobbling.removeAttribute('checked');
     this._scrobble.removeAttribute('checked');
-    this._nextContainer.className='disabled';
+    //this._nextContainer.className='disabled';
     this.setStatusIcon(ICON_DISABLED);
   }
   // FIXME change the status icon?

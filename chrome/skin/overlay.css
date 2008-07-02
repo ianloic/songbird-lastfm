@@ -27,31 +27,16 @@
   border-color: blue;
 }
 
-/* the real name field */
-#lastfmRealname {
+/* clickable fields */
+.lastfmClickable {
   font-weight: bold;
-}
-#lastfmRealname:hover {
-  color: blue;
   text-decoration: underline;
+}
+.lastfmClickable:hover {
+  color: blue;
 }
 
 /* the next scrobbling line */
 #lastfmNextTrack, #lastfmNextTime {
   font-style: italic;
-}
-
-/* the Songbird group on Lastfm */
-#lastfmJoinGroup:hover {
-  color: blue;
-  text-decoration: underline;
-}
-
-#lastfmNextContainer.disabled {
-  display: none;
-}
-
-/* hide the real name field */
-#lastfmRealnameContainer {
-  /*display: none;*/
 }

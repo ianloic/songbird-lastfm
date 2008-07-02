@@ -150,6 +150,9 @@ function sbLastFm() {
   // logged in state
   this.loggedIn = false;
 
+  // hard failure count
+  this.hardFailures = 0;
+
   // the should-we-scrobble pref
   var prefsService = Cc['@mozilla.org/preferences-service;1']
       .getService(Ci.nsIPrefBranch);
@@ -176,6 +179,22 @@ sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
 sbLastFm.prototype.QueryInterface =
     XPCOMUtils.generateQI([Components.interfaces.sbIPlaylistPlaybackListener]);
+
+// failure handling
+sbLastFm.prototype.hardFailure =
+function sbLastFm_hardFailure(message) {
+  this.hardFailures++;
+  if (this.hardFailures >= 3) {
+    // after three hard failures, try to re-handshake
+    Cu.reportError('Last.fm hard failure: ' + message +
+                   '\nFalling back to handshake');
+    this.hardFailures = 0;
+    // XXX this.handshake(....);
+  } else {
+    // just count and log this
+    Cu.reportError('Last.fm hard failure: ' + message);
+  }
+}
 
 // login functionality
 sbLastFm.prototype.login =
@@ -258,12 +277,12 @@ function sbLastFm_handshake(success, failure, auth_failure) {
       return;
     }
     if (response_lines[0] == 'BADAUTH') {
-      Co.reportError('auth failed');
+      Cu.reportError('auth failed');
       auth_failure();
       return;
     }
     if (response_lines[0] != 'OK') {
-      Co.reportError('handshake failure: '+response_lines[0]);
+      Cu.reportError('handshake failure: '+response_lines[0]);
       failure();
       return;
     }
@@ -329,7 +348,7 @@ function sbLastFm_nowPlaying(submission) {
 // a=artist, t=track, i=start-time, l=track-length, b=album, n=track-number
 // the PlayedTrack object implements this
 sbLastFm.prototype.submit =
-function sbLastFm_submit(submissions, success, failure) {
+function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
   // build the submission
   var url = this.submission_url;
   var body = 's=' + encodeURIComponent(this.session);
@@ -340,7 +359,21 @@ function sbLastFm_submit(submissions, success, failure) {
         encodeURIComponent(submissions[i][props[j]]);
     }
   }
-  this.post(url, body, success, failure);
+
+  if (this.session) {
+
+  } else {
+    
+  }
+
+  this.post(url, body, success, function fail(msg) { self.hardFailure(msg); },
+            function badsession() {
+              // if we get a badsession response we should try to re-handshake
+              // and try again
+              self.session = null;
+              self.handshake
+
+              });
 }
 
 // get XML from an URL
@@ -370,27 +403,25 @@ function sbLastFm_getXML(url, success, failure) {
 
 // post to last.fm
 sbLastFm.prototype.post =
-function sbLastFm_post(url, body, success, failure, badsession) {
+function sbLastFm_post(url, body, success, hardfailure, badsession) {
   var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
   xhr.mozBackgroundRequest = true;
   xhr.onload = function(event) {
     /* loaded */
     if (xhr.status != 200) {
-      Cu.reportError('HTTP Error posting to last.fm: '+xhr.status);
-      failure();
+      hardfailure('HTTP status ' + xhr.status + ' posting to ' + url);
     } else if (xhr.responseText.match(/^OK\n/)) {
       success();
     } else if (xhr.responseText.match(/^BADSESSION\n/)) {
       Cu.reportError('Bad Session when posting to last.fm');
       badsession();
     } else {
-      Cu.reportError('Error posting to last.fm: ' + xhr.responseText);
-      failure();
+      hardfailure(xhr.responseText);
     }
   };
   xhr.onerror = function(event) {
     /* errored */
-    Cu.reportError('Received error posting to last.fm');
+    hardfailure('XMLHttpRequest called onerror');
   };
   xhr.open('POST', url, true);
   xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

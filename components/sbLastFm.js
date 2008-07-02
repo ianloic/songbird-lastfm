@@ -215,18 +215,21 @@ function sbLastFm_login() {
         LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
     // download profile info
     self.updateProfile(function success() {
-      self.loggedIn = true;
+      self.setLoggedIn(true);
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
       self.listeners.each(function(l) { l.onOnline(); });
     }, function failure() {
+      self.setLoggedIn(false);
       self.listeners.each(function(l) { l.onLoginFailed(); });
       self.listeners.each(function(l) { l.onOffline(); });
     });
   }, function failure() {
+    self.setLoggedIn(false);
     // FIXME: actually, we need some kind of retry / error reporting
     self.listeners.each(function(l) { l.onLoginFailed(); });
     self.listeners.each(function(l) { l.onOffline(); });
   }, function auth_failure() {
+    self.setLoggedIn(false);
     self.listeners.each(function(l) { l.onLoginFailed(); });
     self.listeners.each(function(l) { l.onOffline(); });
   });
@@ -245,7 +248,14 @@ function sbLastFm_logout() {
   this.session = null;
   this.nowplaying_url = null;
   this.submission_url = null;
-  this.loggedIn = false;
+  this.setLoggedIn(false);
+}
+
+// change the login state
+sbLastFm.prototype.setLoggedIn =
+function sbLastFm_setLoggedIn(aLoggedIn) {
+  this.loggedIn = aLoggedIn;
+  this.listeners.each(function(l) { l.onLoggedInStateChanged(); });
 }
 
 // do the handshake
@@ -363,7 +373,7 @@ function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
   if (this.session) {
 
   } else {
-    
+
   }
 
   this.post(url, body, success, function fail(msg) { self.hardFailure(msg); },

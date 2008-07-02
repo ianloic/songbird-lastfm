@@ -77,16 +77,9 @@ Lastfm.onLoad = function() {
 
   // wire up UI events for the menu items
   this._menuLogin.addEventListener('command',
-      function(event) {
-        // this is either a login or a logout item, depending on the state.
-        if (Lastfm._service.loggedIn) {
-          // if we're already logged in, just log out
-          Lastfm._service.logout();
-        } else {
-          // if we're not logged in, show the login panel
-          Lastfm.showPanel();
-        }
-      }, false);
+      function(event) { Lastfm.showPanel(); }, false);
+  this._menuLogout.addEventListener('command',
+      function(event) { Lastfm.onLogoutClick(event); }, false);
   this._menuEnableScrobbling.addEventListener('command',
       function(event) { Lastfm.toggleShouldScrobble(); }, false);
 
@@ -141,10 +134,8 @@ Lastfm.onLoad = function() {
   this.setLoginError(null);
   // update the ui with the should-scrobble state
   this.onShouldScrobbleChanged(this._service.shouldScrobble);
-  // disable the scrobbling menu item
-  this._menuEnableScrobbling.setAttribute('disabled', 'true');
-  // disable the logout menu item
-  this._menuLogout.style.visibility = 'collapse';
+  // update the ui with the logged-in state
+  this.onLoggedInStateChanged();
 
   // if we have a username & password and we're scrobbling, try to log in
   if (this._service.username && this._service.password) {
@@ -204,6 +195,27 @@ Lastfm.toggleShouldScrobble = function() {
 }
 
 // last.fm event handlers for login events
+Lastfm.onLoggedInStateChanged = function Lastfm_onLoggedInStateChanged() {
+  if (this._service.loggedIn) {
+    // logged in
+
+    // show the "log out" menu item
+    this._menuLogout.style.visibility = 'visible';
+    // hide the "log in" menu item
+    this._menuLogin.style.visibility = 'collapse';
+    // enable the "enable scrobbling" menu item
+    this._menuEnableScrobbling.disabled = false;
+  } else {
+    // logged out
+
+    // hide the "log out" menu item
+    this._menuLogout.style.visibility = 'collapse';
+    // show the "log in" menu item
+    this._menuLogin.style.visibility = 'visible';
+    // disable the "enable scrobbling" menu item
+    this._menuEnableScrobbling.disabled = true;
+  }
+}
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this._deck.selectedPanel = this._loggingIn;
   this.setStatusIcon(ICON_BUSY);
@@ -233,10 +245,7 @@ Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   this.setStatusIcon(ICON_LOGGED_IN);
   this.setStatusTextId('lastfm.status.logged_in');
 
-  // enable the logout menu item
-  this._menuLogout.style.visibility = 'visible';
-  // disable the login menu item
-  this._menuLogin.style.visibility = 'collapse';
+
 }
 Lastfm.onOnline = function Lastfm_onOnline() {
   // main screen turn on

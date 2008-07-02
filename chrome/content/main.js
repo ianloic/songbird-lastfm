@@ -4,6 +4,7 @@ const ICON_DISABLED = 'chrome://lastfm/skin/disabled.png';
 const ICON_LOGGED_IN = 'chrome://lastfm/skin/as.png';
 const ICON_ERROR = 'chrome://lastfm/skin/error.png';
 
+const URL_SIGNUP = 'http://www.last.fm/join/';
 
 // Make a namespace.
 if (typeof Lastfm == 'undefined') {
@@ -47,6 +48,8 @@ Lastfm.onLoad = function() {
   this._loginError = document.getElementById('lastfmLoginError');
   // login button
   this._loginButton = document.getElementById('lastfmLoginButton');
+  // signup link
+  this._signup = document.getElementById('lastfmSignup');
 
   // the logging-in page of the deck
   this._loggingIn = document.getElementById('lastfmLoggingIn');
@@ -109,13 +112,22 @@ Lastfm.onLoad = function() {
   this._logoutButton.addEventListener('command',
       function(event) { Lastfm.onLogoutClick(event); }, false);
 
+  // wire up the signup link
+  this._signup.addEventListener('click',
+      function(event) { Lastfm.loadURI(URL_SIGNUP, event); }, false);
+
   // wire up UI events for the profile links
   this._image.addEventListener('click',
-      function(event) { Lastfm.onProfileClick(event); }, false);
+      function(event) { Lastfm.loadURI(Lastfm._service.profileurl, event); },
+      false);
   this._realname.addEventListener('click',
-      function(event) { Lastfm.onProfileClick(event); }, false);
+      function(event) { Lastfm.loadURI(Lastfm._service.profileurl, event); },
+      false);
   this._tracks.addEventListener('click',
-      function(event) { Lastfm.onChartsClick(event); }, false);
+      function(event) {
+        Lastfm.loadURI('http://www.last.fm/user/' +
+                       Lastfm._service.username + '/charts/', event);
+      }, false);
 
   // ui event for the should-scrobble checkbox
   this._scrobble.addEventListener('command',
@@ -173,11 +185,12 @@ Lastfm.onLogoutClick = function(event) {
   this._service.logout();
 }
 
-// profile click event handler
-Lastfm.onProfileClick = function(event) {
-  gBrowser.loadURI(this._service.profileurl, null, null, event, '_blank');
+// load an URL from an event in the panel
+Lastfm.loadURI= function(uri, event) {
+  gBrowser.loadURI(uri, null, null, event, '_blank');
   this._panel.hidePopup();
 }
+
 // charts click handler
 Lastfm.onChartsClick = function(event) {
   http://www.last.fm/user/ianloictest/charts/

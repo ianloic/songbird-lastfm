@@ -24,6 +24,7 @@ Lastfm.onLoad = function() {
 
   // menu items
   this._menuLogin = document.getElementById('lastfmMenuLogin');
+  this._menuLogout = document.getElementById('lastfmMenuLogout');
   this._menuEnableScrobbling =
     document.getElementById('lastfmMenuEnableScrobbling');
 
@@ -130,6 +131,8 @@ Lastfm.onLoad = function() {
   this.onShouldScrobbleChanged(this._service.shouldScrobble);
   // disable the scrobbling menu item
   this._menuEnableScrobbling.setAttribute('disabled', 'true');
+  // disable the logout menu item
+  this._menuLogout.style.visibility = 'collapse';
 
   // if we have a username & password and we're scrobbling, try to log in
   if (this._service.username && this._service.password) {
@@ -215,7 +218,12 @@ Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
 
   // set the status icon
   this.setStatusIcon(ICON_LOGGED_IN);
-  this.setStatusTextId('lastfm.status.logged_in')
+  this.setStatusTextId('lastfm.status.logged_in');
+
+  // enable the logout menu item
+  this._menuLogout.style.visibility = 'visible';
+  // disable the login menu item
+  this._menuLogin.style.visibility = 'collapse';
 }
 Lastfm.onOnline = function Lastfm_onOnline() {
   // main screen turn on

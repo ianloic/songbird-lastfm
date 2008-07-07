@@ -86,16 +86,14 @@ Lastfm.onLoad = function() {
   // wire up click event for the status icon
   this._statusIcon.addEventListener('click',
       function(event) {
-        // only listen to the left mouse button
-        if (event.button != 0) return;
-        if (Lastfm._service.loggedIn) {
+        if (event.button == 0 && !event.ctrlKey && Lastfm._service.loggedIn) {
           // if we're logged in, toggle the scrobble state
           Lastfm.toggleShouldScrobble();
-        } else {
-          // or show the login panel
-          Lastfm.showPanel();
-        }
-      }, false);
+      } else {
+        // or show the panel
+        Lastfm.showPanel();
+      }
+    }, false);
 
   // wire up UI events for the buttons
   this._loginButton.addEventListener('command',

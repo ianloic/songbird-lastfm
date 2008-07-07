@@ -86,7 +86,6 @@
   <statusbar id="status-bar">
     <statusbarpanel id="lastfmStatusIcon"
       class="statusbarpanel-iconic"
-      context="lastfmPanel"
       src="chrome://lastfm/skin/disabled.png"
       tooltiptext=""
     />

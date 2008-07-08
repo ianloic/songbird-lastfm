@@ -5,6 +5,10 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+// our annotations
+const ANNOTATION_SCROBBLED = 'http://www.songbirdnest.com/lastfm#scrobbled';
+const ANNOTATION_HIDDEN = 'http://www.songbirdnest.com/lastfm#hidden';
+
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -23,7 +27,7 @@ const LOGIN_FIELD_PASSWORD = 'password';
 
 // helper for enumerating enumerators. duh.
 function enumerate(enumerator, func) {
-  while(enumerator.hasMoreEntries()) {
+  while(enumerator.hasMoreElements()) {
     try {
       func(enumerator.getNext());
     } catch(e) {
@@ -164,13 +168,12 @@ function sbLastFm() {
     this.listeners.each(function(l) { l.onShouldScrobbleChanged(val); });
   });
 
-  // add ourselves as a playlist playback listener
-  Cc['@songbirdnest.com/Songbird/PlaylistPlayback;1']
-      .getService(Ci.sbIPlaylistPlayback).addListener(this);
-
+  // get the playback history service
   this._playbackHistory =
       Cc['@songbirdnest.com/Songbird/PlaybackHistoryService;1']
       .getService(Ci.sbIPlaybackHistoryService);
+  // add ourselves as a playlist history listener
+  this._playbackHistory.addListener(this);
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -178,7 +181,7 @@ sbLastFm.prototype.contractID = '@songbirdnest.com/lastfm;1';
 sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
 sbLastFm.prototype.QueryInterface =
-    XPCOMUtils.generateQI([Components.interfaces.sbIPlaylistPlaybackListener]);
+    XPCOMUtils.generateQI([Components.interfaces.sbIPlaybackHistoryListener]);
 
 // failure handling
 sbLastFm.prototype.hardFailure =
@@ -436,36 +439,72 @@ function sbLastFm_post(url, body, success, hardfailure, badsession) {
   xhr.open('POST', url, true);
   xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
   xhr.send(body);
+  dump('POSTed: '+body+'\n');
+  dump('to: '+url+'\n');
 }
 
 
-// sbIPlaylistPlaybackListener
-sbLastFm.prototype.onStop = function sbLastFm_onStop() {
-  try {
-  dump('sbLastFm.onStop()\n');
-  dump('entries: '+this._playbackHistory.entries+'\n');
-  dump('entries.hasMoreElements(): '+this._playbackHistory.entries.hasMoreElements()+'\n');
+// sbIPlaybackHistoryListener
+sbLastFm.prototype.onEntriesAdded =
+function sbLastFm_onEntriesAdded(aEntries) {
+  dump('\n\n\n!!!!!! onEntriesAdded\n\n\n');
+  var entry_list = [];
   enumerate(this._playbackHistory.entries,
             function(e) {
               e.QueryInterface(Ci.sbIPlaybackHistoryEntry);
+              function checkAnnotation(id) {
+                try {
+                  e.annotations.getPropertyValue(id);
+                  return true;
+                } catch(e) {
+                  return false;
+                }
+              }
               dump(' history entry: '+e+'\n');
+              dump('  trackName: '+e.item.getProperty(SBProperties.trackName)+'\n');
+              dump('  scrobbled: '+checkAnnotation(ANNOTATION_SCROBBLED)+'\n');
+              dump('  hidden: '+checkAnnotation(ANNOTATION_HIDDEN)+'\n');
+              dump('  timestamp: '+e.timestamp+'\n');
+              if (!checkAnnotation(ANNOTATION_SCROBBLED) &&
+                  !checkAnnotation(ANNOTATION_HIDDEN)) {
+                dump('scrobble this\n');
+                entry_list.push(e);
+              }
             });
-  } catch(e) { Cu.reportError(e); }
+
+  // create the scrobble list in the reverse order
+  var scrobble_list = [];
+  if (entry_list.length > 0) {
+    for (var i=entry_list.length-1; i>=0; i--) {
+      scrobble_list.push(
+          new PlayedTrack(entry_list[i].item,
+                          Math.round(entry_list[i].timestamp/1000)));
+    }
+    this.submit(scrobble_list, function success() {
+      // on success mark all these as scrobbled
+      dump('entry_list: '+entry_list.toSource()+'\n');
+      for (i=0; i<entry_list.length; i++) {
+        dump('el['+i+']='+entry_list[i]+'\n');
+        var annotations = entry_list[i].annotations;
+        annotations.QueryInterface(Ci.sbIMutablePropertyArray);
+        annotations.appendProperty(ANNOTATION_SCROBBLED, 'true');
+      }
+    }, function failure() {
+      dump('FAILURE\n');
+    });
+  }
 }
-sbLastFm.prototype.onBeforeTrackChange =
-function sbLastFm_onBeforeTrackChange(aItem, aView, aIndex) {
-  dump('sbLastFm.onBeforeTrackChange('+aItem+')\n');
-  var timestamp = Math.round(Date.now()/1000).toString();
-  this.submit([new PlayedTrack(aItem, timestamp)],
-              function() { }, function() { });
+sbLastFm.prototype.onEntriesUpdated =
+function sbLastFm_onEntriesUpdated(aEntries) {
+
 }
-sbLastFm.prototype.onTrackChange =
-function sbLastFm_onTrackChange(aItem, aView, aIndex) {
-  dump('sbLastFm.onTrackChange('+aItem+')\n');
-  // ugh - we need to add our own entries to the history service now
-  // this will go away once Aus is done
-  this._playbackHistory.createEntry(aItem, (new Date()).getTime(), 1000, null);
-  dump('added a history entry\n');
+sbLastFm.prototype.onEntriesRemoved =
+function sbLastFm_onEntriesRemoved(aEntries) {
+
+}
+sbLastFm.prototype.onEntriesCleared =
+function sbLastFm_onEntriesCleared() {
+
 }
 
 

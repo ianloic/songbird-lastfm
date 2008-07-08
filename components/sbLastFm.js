@@ -383,12 +383,12 @@ function sbLastFm_updateProfile(succeeded, failed) {
 sbLastFm.prototype.nowPlaying =
 function sbLastFm_nowPlaying(submission) {
   var url = this.nowplaying_url;
-  var body = 's=' + encodeURIComponent(this.session);
+  var params = {s:this.session};
   var props = 'atblnm'; // the keys we send
   for (var j=0; j<props.length; j++) {
-    body += '&' + props[j] + '=' + encodeURIComponent(submission[props[j]]);
+    params[props[j]] = submission[props[j]];
   }
-  this.post(url, body, success, failure);
+  this.asPost(url, params, success, failure);
 }
 
 // the first argument is an array of object, each with one-letter keys
@@ -399,12 +399,11 @@ sbLastFm.prototype.submit =
 function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
   // build the submission
   var url = this.submission_url;
-  var body = 's=' + encodeURIComponent(this.session);
+  var params = {s:this.session};
   var props = 'brainmolt'; // the keys we send
   for (var i=0; i<submissions.length; i++) {
     for (var j=0; j<props.length; j++) {
-      body += '&' + props[j] + '[' + i + ']=' +
-        encodeURIComponent(submissions[i][props[j]]);
+      params[props[j] + '[' + i + ']'] = submissions[i][props[j]];
     }
   }
 
@@ -414,7 +413,7 @@ function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
 
   }
 
-  this.post(url, body, success, function fail(msg) { self.hardFailure(msg); },
+  this.asPost(url, params, success, function fail(msg) { self.hardFailure(msg); },
             function badsession() {
               // if we get a badsession response we should try to re-handshake
               // and try again
@@ -449,12 +448,10 @@ function sbLastFm_getXML(url, success, failure) {
 }
 
 
-// post to last.fm
-sbLastFm.prototype.post =
-function sbLastFm_post(url, body, success, hardfailure, badsession) {
-  var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
-  xhr.mozBackgroundRequest = true;
-  xhr.onload = function(event) {
+// post to audioscrobbler (the old api)
+sbLastFm.prototype.asPost =
+function sbLastFm_asPost(url, params, success, hardfailure, badsession) {
+  POST(url, params, function(xhr) {
     /* loaded */
     if (xhr.status != 200) {
       hardfailure('HTTP status ' + xhr.status + ' posting to ' + url);
@@ -466,16 +463,10 @@ function sbLastFm_post(url, body, success, hardfailure, badsession) {
     } else {
       hardfailure(xhr.responseText);
     }
-  };
-  xhr.onerror = function(event) {
+  }, function(xhr) {
     /* errored */
     hardfailure('XMLHttpRequest called onerror');
-  };
-  xhr.open('POST', url, true);
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  xhr.send(body);
-  dump('POSTed: '+body+'\n');
-  dump('to: '+url+'\n');
+  });
 }
 
 

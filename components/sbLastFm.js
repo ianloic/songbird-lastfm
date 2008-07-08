@@ -106,33 +106,32 @@ function POST(url, params, onload, onerror) {
 
 // An object to track listeners
 function Listeners() {
-  this._listeners = [];
-}
-Listeners.prototype.add = function Listeners_add(aListener) {
-  this._listeners.push(aListener);
-}
-Listeners.prototype.remove = function Listeners_remove(aListener) {
-  for(;;) {
-    // find our listener in the array
-    let i = this._listeners.indexOf(aListener);
-    if (i >= 0) {
-      // remove it
-      this._listeners.splice(i, 1);
-    } else {
-      return;
+  var listeners = [];
+  this.add = function Listeners_add(aListener) {
+    listeners.push(aListener);
+  }
+  this.remove = function Listeners_remove(aListener) {
+    for(;;) {
+      // find our listener in the array
+      let i = listeners.indexOf(aListener);
+      if (i >= 0) {
+        // remove it
+        listeners.splice(i, 1);
+      } else {
+        return;
+      }
+    }
+  }
+  this.each = function Listeners_each(aCallback) {
+    for (var i=0; i<listeners.length; i++) {
+      try {
+        aCallback(listeners[i]);
+      } catch(e) {
+        Cu.reportError(e);
+      }
     }
   }
 }
-Listeners.prototype.each = function Listeners_each(aCallback) {
-  for (var i=0; i<this._listeners.length; i++) {
-    try {
-      aCallback(this._listeners[i]);
-    } catch(e) {
-      Cu.reportError(e);
-    }
-  }
-}
-
 
 // an object that represents a played track for sending to Last.fm
 function PlayedTrack(mediaItem, timestamp, rating, source) {
@@ -526,7 +525,7 @@ function sbLastFm_apiCall(method, params, success, failure) {
   // post the request
   POST(REST_URL, post_params, function (xhr) {
     dump('apiCall POST success\n');
-    dump(xhr.responseText+'\n')
+    dump(xhr.responseText+'\n');
     if (!xhr.responseXML) {
       // we expect all API responses to have XML
       failure(xhr);
@@ -540,7 +539,7 @@ function sbLastFm_apiCall(method, params, success, failure) {
     }
     if (xhr.responseXML.documentElement.getAttribute('status' == 'failed')) {
       // the server reported an error
-      Cu.reportError('Last.fm Web Services Error: '+xhr.responseXML)
+      Cu.reportError('Last.fm Web Services Error: '+xhr.responseXML);
       failure(xhr);
       return;
     }

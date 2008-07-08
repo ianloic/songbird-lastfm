@@ -9,11 +9,10 @@ const Cu = Components.utils;
 const ANNOTATION_SCROBBLED = 'http://www.songbirdnest.com/lastfm#scrobbled';
 const ANNOTATION_HIDDEN = 'http://www.songbirdnest.com/lastfm#hidden';
 
-// Last.fm API key and secret
+// Last.fm API key, secret and URL
 const API_KEY = '4d5bce1e977549f10623b51dd0e10c5a';
 const API_SECRET = '3ebb03d4561260686b98388037931f11'; // obviously not secret
-
-const REST_URL = 'http://ws.audioscrobbler.com/2.0/';
+const API_URL = 'http://ws.audioscrobbler.com/2.0/';
 
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -523,7 +522,7 @@ function sbLastFm_apiCall(method, params, success, failure) {
   post_params.api_sig = md5(sorted_params+API_SECRET);
 
   // post the request
-  POST(REST_URL, post_params, function (xhr) {
+  POST(API_URL, post_params, function (xhr) {
     dump('apiCall POST success\n');
     dump(xhr.responseText+'\n');
     if (!xhr.responseXML) {

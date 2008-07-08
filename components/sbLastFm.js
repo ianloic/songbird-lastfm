@@ -604,18 +604,11 @@ function sbLastFm_onEntriesAdded(aEntries) {
   }
 }
 sbLastFm.prototype.onEntriesUpdated =
-function sbLastFm_onEntriesUpdated(aEntries) {
-
-}
+function sbLastFm_onEntriesUpdated(aEntries) { }
 sbLastFm.prototype.onEntriesRemoved =
-function sbLastFm_onEntriesRemoved(aEntries) {
-
-}
+function sbLastFm_onEntriesRemoved(aEntries) { }
 sbLastFm.prototype.onEntriesCleared =
-function sbLastFm_onEntriesCleared() {
-
-}
-
+function sbLastFm_onEntriesCleared() { }
 
 
 function NSGetModule(compMgr, fileSpec) {

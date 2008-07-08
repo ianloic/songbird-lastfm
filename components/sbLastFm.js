@@ -9,6 +9,12 @@ const Cu = Components.utils;
 const ANNOTATION_SCROBBLED = 'http://www.songbirdnest.com/lastfm#scrobbled';
 const ANNOTATION_HIDDEN = 'http://www.songbirdnest.com/lastfm#hidden';
 
+// Last.fm API key and secret
+const API_KEY = '4d5bce1e977549f10623b51dd0e10c5a';
+const API_SECRET = '3ebb03d4561260686b98388037931f11'; // obviously not secret
+
+const REST_URL = 'http://ws.audioscrobbler.com/2.0/';
+
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -66,6 +72,36 @@ function md5(str) {
   // convert the binary hash data to a hex string.
   var s = [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
   return s;
+}
+
+// urlencode an object's keys & values
+function urlencode(o) {
+  s = '';
+  for (var k in o) {
+    var v = o[k];
+    if (s.length) { s += '&'; }
+    s += encodeURIComponent(k) + '=' + encodeURIComponent(v);
+  }
+  return s;
+}
+
+// make an HTTP POST request
+function POST(url, params, onload, onerror) {
+  // create the XMLHttpRequest object
+  var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
+  // don't tie it to a XUL window
+  xhr.mozBackgroundRequest = true;
+  // set up event handlers
+  xhr.onload = function(event) { onload(xhr); }
+  xhr.onerror = function(event) { onerror(xhr); }
+  // open the connection to the url
+  xhr.open('POST', url, true);
+  // we're always sending url encoded parameters
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  // send url encoded parameters
+  xhr.send(urlencode(params));
+  // pass the XHR back to the caller
+  return xhr;
 }
 
 // An object to track listeners
@@ -221,6 +257,7 @@ function sbLastFm_login() {
       self.setLoggedIn(true);
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
       self.listeners.each(function(l) { l.onOnline(); });
+      self.apiAuth();
     }, function failure() {
       self.setLoggedIn(false);
       self.listeners.each(function(l) { l.onLoginFailed(); });
@@ -441,6 +478,78 @@ function sbLastFm_post(url, body, success, hardfailure, badsession) {
   xhr.send(body);
   dump('POSTed: '+body+'\n');
   dump('to: '+url+'\n');
+}
+
+
+sbLastFm.prototype.apiAuth = function sbLastFm_apiAuth() {
+  // stuff
+  this.apiCall('auth.getMobileSession', {
+    username: this.username,
+    authToken: md5(this.username + md5(this.password))
+  }, function success(xml) {
+    dump('apiAuth success FTW!!!\n');
+  }, function failure(xhr) {
+    dump('apiAuth failuring\n');
+  });
+}
+
+
+sbLastFm.prototype.apiCall =
+function sbLastFm_apiCall(method, params, success, failure) {
+  // make a new Last.fm Web Service API call
+  // see: http://www.last.fm/api/rest
+  // note: this isn't really REST.
+
+  // create an object to hold the HTTP params
+  var post_params = new Object();
+
+  // copy in our params
+  for (var k in params) { post_params[k] = params[k]; }
+
+  // set the method and API key
+  post_params.method = method;
+  post_params.api_key = API_KEY;
+
+  // calculate the signature...
+  // put the key/value pairs in an array
+  var sorted_params = new Array();
+  for (var k in post_params) {
+    sorted_params.push(k+post_params[k])
+  }
+  // sort them
+  sorted_params.sort();
+  // join them into a string
+  sorted_params.join('');
+  // hash them with the "secret" to get the API signature
+  post_params.api_sig = md5(sorted_params+API_SECRET);
+
+  // post the request
+  POST(REST_URL, post_params, function (xhr) {
+    dump('apiCall POST success\n');
+    dump(xhr.responseText+'\n')
+    if (!xhr.responseXML) {
+      // we expect all API responses to have XML
+      failure(xhr);
+      return;
+    }
+    if (xhr.responseXML.documentElement.tagName != 'lfm' ||
+        !xhr.responseXML.documentElement.hasAttribute('status')) {
+      // we expect the root (document) element to be <lfm status="...">
+      failure(xhr);
+      return;
+    }
+    if (xhr.responseXML.documentElement.getAttribute('status' == 'failed')) {
+      // the server reported an error
+      Cu.reportError('Last.fm Web Services Error: '+xhr.responseXML)
+      failure(xhr);
+      return;
+    }
+    // all should be good!
+    success(xhr.responseXML);
+  }, function (xhr) {
+    dump('apiCall POST failure\n');
+    failure(xhr);
+  });
 }
 
 

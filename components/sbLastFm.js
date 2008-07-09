@@ -191,6 +191,9 @@ function sbLastFm() {
   // hard failure count
   this.hardFailures = 0;
 
+  // the session key used by the last.fm "rest" web service
+  this.sk = null;
+
   // the should-we-scrobble pref
   var prefsService = Cc['@mozilla.org/preferences-service;1']
       .getService(Ci.nsIPrefBranch);
@@ -471,12 +474,17 @@ function sbLastFm_asPost(url, params, success, hardfailure, badsession) {
 
 
 sbLastFm.prototype.apiAuth = function sbLastFm_apiAuth() {
-  // stuff
+  // get a lastfm mobile session
+  var self = this;
   this.apiCall('auth.getMobileSession', {
     username: this.username,
     authToken: md5(this.username + md5(this.password))
   }, function success(xml) {
     dump('apiAuth success FTW!!!\n');
+    var keys = xml.getElementsByTagName('key');
+    if (keys.length == 1) {
+      self.sk = keys[0].textContent;
+    }
   }, function failure(xhr) {
     dump('apiAuth failuring\n');
   });
@@ -498,6 +506,8 @@ function sbLastFm_apiCall(method, params, success, failure) {
   // set the method and API key
   post_params.method = method;
   post_params.api_key = API_KEY;
+  // if we have an sk, use it
+  if (this.sk) post_params.sk = this.sk;
 
   // calculate the signature...
   // put the key/value pairs in an array

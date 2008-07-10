@@ -422,7 +422,6 @@ function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
               // and try again
               self.session = null;
               self.handshake
-
               });
 }
 
@@ -472,7 +471,7 @@ function sbLastFm_asPost(url, params, success, hardfailure, badsession) {
   });
 }
 
-
+// authenticate against the new Last.fm "rest" web service APIs
 sbLastFm.prototype.apiAuth = function sbLastFm_apiAuth() {
   // get a lastfm mobile session
   var self = this;

@@ -236,6 +236,21 @@ function sbLastFm_hardFailure(message) {
   }
 }
 
+// save the login state in the sbLastFm object back to mozilla's password
+// manager
+sbLastFm.prototype._saveCredentials =
+function sbLastFm_saveCredentials () {
+  // clear old login infos
+  var logins = lastfmLogins();
+  for (var i=0; i<logins.length; i++) {
+    loginManager.removeLogin(logins[i]);
+  }
+  // set new login info
+  loginManager.addLogin(new nsLoginInfo(LOGIN_HOSTNAME,
+      LOGIN_FORMURL, null, self.username, self.password,
+      LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
+}
+
 // login functionality
 sbLastFm.prototype.login =
 function sbLastFm_login() {
@@ -244,35 +259,21 @@ function sbLastFm_login() {
   // first step - handshake.
   var self = this;
   this.handshake(function success() {
-    // clear old login infos
-    var logins = lastfmLogins();
-    for (var i=0; i<logins.length; i++) {
-      loginManager.removeLogin(logins[i]);
-    }
-    // set new login info
-    loginManager.addLogin(new nsLoginInfo(LOGIN_HOSTNAME,
-        LOGIN_FORMURL, null, self.username, self.password,
-        LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
-    // download profile info
-    self.updateProfile(function success() {
-      self.setLoggedIn(true);
-      self.listeners.each(function(l) { l.onLoginSucceeded(); });
-      self.listeners.each(function(l) { l.onOnline(); });
-      self.apiAuth();
-    }, function failure() {
-      self.setLoggedIn(false);
-      self.listeners.each(function(l) { l.onLoginFailed(); });
-      self.listeners.each(function(l) { l.onOffline(); });
-    });
-  }, function failure() {
+    // save the credentials
+    self._saveCredentials();
+
+    // authenticate against the new Last.fm "rest" API
+    self.apiAuth();
+
+
+  }, function failure(aAuthFailed) {
     self.setLoggedIn(false);
-    // FIXME: actually, we need some kind of retry / error reporting
     self.listeners.each(function(l) { l.onLoginFailed(); });
-    self.listeners.each(function(l) { l.onOffline(); });
+    self.setOnline(false);
   }, function auth_failure() {
     self.setLoggedIn(false);
     self.listeners.each(function(l) { l.onLoginFailed(); });
-    self.listeners.each(function(l) { l.onOffline(); });
+    self.setOnline(false);
   });
 }
 sbLastFm.prototype.cancelLogin =
@@ -299,16 +300,28 @@ function sbLastFm_setLoggedIn(aLoggedIn) {
   this.listeners.each(function(l) { l.onLoggedInStateChanged(); });
 }
 
+// change the online state
+sbLastFm.prototype.setOnline=
+function sbLastFm_setOnline(aOnline) {
+  if (aOnline) {
+    self.listeners.each(function(l) { l.onOnline(); });
+  } else {
+    self.listeners.each(function(l) { l.onOffline(); });
+  }
+}
+
 // do the handshake
 sbLastFm.prototype.handshake =
-function sbLastFm_handshake(success, failure, auth_failure) {
+function sbLastFm_handshake(success, failure) {
   // make the url
   var timestamp = Math.round(Date.now()/1000).toString();
   var hs_url = 'http://post.audioscrobbler.com/?hs=true&p=1.2&c=sbd&v=0.1' +
     '&u=' + this.username + '&t=' + timestamp + '&a=' +
     md5(md5(this.password) + timestamp);
 
-  Cu.reportError(hs_url);
+  function failureOccurred(aAuthFailure) {
+    failure(aAuthFailure);
+  }
 
   this._handshake_xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
     .createInstance();
@@ -318,37 +331,49 @@ function sbLastFm_handshake(success, failure, auth_failure) {
     /* loaded */
     if (self._handshake_xhr.status != 200) {
       Cu.reportError('status: '+self._handshake_xhr.status);
-      failure();
+      failureOccurred(false);
       return;
     }
     var response_lines = self._handshake_xhr.responseText.split('\n');
     if (response_lines.length < 4) {
       Cu.reportError('not enough lines: '+response_lines.toSource());
-      failure();
+      failureOccurred(false);
       return;
     }
     if (response_lines[0] == 'BADAUTH') {
       Cu.reportError('auth failed');
-      auth_failure();
+      failureOccurred(true);
       return;
     }
     if (response_lines[0] != 'OK') {
       Cu.reportError('handshake failure: '+response_lines[0]);
-      failure();
+      failureOccurred(false);
       return;
     }
     self.session = response_lines[1];
     self.nowplaying_url = response_lines[2];
     self.submission_url = response_lines[3];
+
+    // download profile info
+    self.updateProfile(function success() {
+      self.setLoggedIn(true);
+      self.listeners.each(function(l) { l.onLoginSucceeded(); });
+      self.setOnline(true);
+    }, function failure() {
+      self.setLoggedIn(false);
+      self.listeners.each(function(l) { l.onLoginFailed(); });
+      self.setOnline(false);
+    });
+
     success();
   };
   this._handshake_xhr.onerror = function(event) {
-    /* loaded */
+    /* faileded */
     Cu.reportError('errored');
+    failureOccurred(false);
   };
   this._handshake_xhr.open('GET', hs_url, true);
   this._handshake_xhr.send(null);
-
 }
 
 // update profile data
@@ -399,7 +424,7 @@ function sbLastFm_nowPlaying(submission) {
 // a=artist, t=track, i=start-time, l=track-length, b=album, n=track-number
 // the PlayedTrack object implements this
 sbLastFm.prototype.submit =
-function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
+function sbLastFm_submit(submissions, success, failure) {
   // build the submission
   var url = this.submission_url;
   var params = {s:this.session};
@@ -410,19 +435,23 @@ function sbLastFm_submit(submissions, success, failure, _retry_on_failure) {
     }
   }
 
-  if (this.session) {
+  var self = this;
+  // do the posting to last.fm
+  function postToLastFm() {
+    this.asPost(url, params, success,
+                function fail(msg) { self.hardFailure(msg); },
+                function badsession() { self.badSession(); });
+  }
 
+  if (this.session) {
+    // if we already have a session, just go ahead and post
+    postToLastFm();
   } else {
+    // we need to log in first
 
   }
 
-  this.asPost(url, params, success, function fail(msg) { self.hardFailure(msg); },
-            function badsession() {
-              // if we get a badsession response we should try to re-handshake
-              // and try again
-              self.session = null;
-              self.handshake
-              });
+
 }
 
 // get XML from an URL

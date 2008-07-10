@@ -223,9 +223,6 @@ Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   // clear the login error
   this.setLoginError(null);
 
-  // set the status icon
-  this.setStatusIcon(ICON_DISABLED);
-  this.setStatusTextId('lastfm.status.offline');
 }
 Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
   // set the login error message
@@ -238,24 +235,26 @@ Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   // clear the login error
   this.setLoginError(null);
-
-  // set the status icon
-  this.setStatusIcon(ICON_LOGGED_IN);
-  this.setStatusTextId('lastfm.status.logged_in');
-
-
 }
 Lastfm.onOnline = function Lastfm_onOnline() {
   // main screen turn on
   this._deck.selectedPanel = this._profile;
   // enable the scrobbling menuitem
   this._menuEnableScrobbling.removeAttribute('disabled');
+
+  // set the status icon
+  this.setStatusIcon(ICON_LOGGED_IN);
+  this.setStatusTextId('lastfm.status.logged_in');
 }
 Lastfm.onOffline = function Lastfm_onOffline() {
   // switch back to the login panel
   this._deck.selectedPanel = this._login;
   // disable the scrobbling menu item
   this._menuEnableScrobbling.setAttribute('disabled', 'true');
+
+  // set the status icon
+  this.setStatusIcon(ICON_DISABLED);
+  this.setStatusTextId('lastfm.status.offline');
 }
 
 // last.fm profile changed

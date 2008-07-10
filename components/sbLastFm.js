@@ -552,9 +552,9 @@ function sbLastFm_apiCall(method, params, success, failure) {
 }
 
 
-// sbIPlaybackHistoryListener
-sbLastFm.prototype.onEntriesAdded =
-function sbLastFm_onEntriesAdded(aEntries) {
+// try to scrobble pending tracks from playback history
+sbLastFm.prototype.scrobble =
+function sbLastFm_scrobble() {
   var entry_list = [];
   enumerate(this._playbackHistory.entries,
             function(e) {
@@ -568,20 +568,30 @@ function sbLastFm_onEntriesAdded(aEntries) {
   // create the scrobble list in the reverse order
   var scrobble_list = [];
   if (entry_list.length > 0) {
+    // collect the playlist history entries into objects that can be sent
+    // to last.fm's audioscrobbler api
     for (var i=entry_list.length-1; i>=0; i--) {
       scrobble_list.push(
           new PlayedTrack(entry_list[i].item,
                           Math.round(entry_list[i].timestamp/1000)));
     }
+    // submit to the last.fm audioscrobbler api
     this.submit(scrobble_list, function success() {
       // on success mark all these as scrobbled
       for (i=0; i<entry_list.length; i++) {
         entry_list[i].setAnnotation(ANNOTATION_SCROBBLED, 'true');
       }
     }, function failure() {
-      dump('FAILURE\n');
+      // failure happens - we'll try again later anyway
     });
   }
+}
+
+
+// sbIPlaybackHistoryListener
+sbLastFm.prototype.onEntriesAdded =
+function sbLastFm_onEntriesAdded(aEntries) {
+  this.scrobble();
 }
 sbLastFm.prototype.onEntriesUpdated =
 function sbLastFm_onEntriesUpdated(aEntries) { }

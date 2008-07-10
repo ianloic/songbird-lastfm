@@ -555,27 +555,12 @@ function sbLastFm_apiCall(method, params, success, failure) {
 // sbIPlaybackHistoryListener
 sbLastFm.prototype.onEntriesAdded =
 function sbLastFm_onEntriesAdded(aEntries) {
-  dump('\n\n\n!!!!!! onEntriesAdded\n\n\n');
   var entry_list = [];
   enumerate(this._playbackHistory.entries,
             function(e) {
               e.QueryInterface(Ci.sbIPlaybackHistoryEntry);
-              function checkAnnotation(id) {
-                try {
-                  e.annotations.getPropertyValue(id);
-                  return true;
-                } catch(e) {
-                  return false;
-                }
-              }
-              dump(' history entry: '+e+'\n');
-              dump('  trackName: '+e.item.getProperty(SBProperties.trackName)+'\n');
-              dump('  scrobbled: '+checkAnnotation(ANNOTATION_SCROBBLED)+'\n');
-              dump('  hidden: '+checkAnnotation(ANNOTATION_HIDDEN)+'\n');
-              dump('  timestamp: '+e.timestamp+'\n');
-              if (!checkAnnotation(ANNOTATION_SCROBBLED) &&
-                  !checkAnnotation(ANNOTATION_HIDDEN)) {
-                dump('scrobble this\n');
+              if (!e.hasAnnotation(ANNOTATION_SCROBBLED) &&
+                  !e.hasAnnotation(ANNOTATION_HIDDEN)) {
                 entry_list.push(e);
               }
             });
@@ -590,12 +575,8 @@ function sbLastFm_onEntriesAdded(aEntries) {
     }
     this.submit(scrobble_list, function success() {
       // on success mark all these as scrobbled
-      dump('entry_list: '+entry_list.toSource()+'\n');
       for (i=0; i<entry_list.length; i++) {
-        dump('el['+i+']='+entry_list[i]+'\n');
-        var annotations = entry_list[i].annotations;
-        annotations.QueryInterface(Ci.sbIMutablePropertyArray);
-        annotations.appendProperty(ANNOTATION_SCROBBLED, 'true');
+        entry_list[i].setAnnotation(ANNOTATION_SCROBBLED, 'true');
       }
     }, function failure() {
       dump('FAILURE\n');

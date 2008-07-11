@@ -624,6 +624,8 @@ function sbLastFm_scrobble() {
         for (i=0; i<entry_list.length; i++) {
           entry_list[i].setAnnotation(ANNOTATION_SCROBBLED, 'true');
         }
+        self.playcount += entry_list.length;
+        self.listeners.each(function(l) { l.onProfileUpdated(); });
       },
       function failure() {
         // failure happens - we'll try again later anyway

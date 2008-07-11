@@ -20,15 +20,51 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 // import the properites helper
 Components.utils.import("resource://app/jsmodules/sbProperties.jsm");
 
-// login manager
-const loginManager = Cc["@mozilla.org/login-manager;1"]
-    .getService(Ci.nsILoginManager);
-const nsLoginInfo = new CC("@mozilla.org/login-manager/loginInfo;1",
-    Ci.nsILoginInfo, "init");
-const LOGIN_HOSTNAME = 'https://www.last.fm';
-const LOGIN_FORMURL = 'https://www.last.fm';
-const LOGIN_FIELD_USERNAME = 'username';
-const LOGIN_FIELD_PASSWORD = 'password';
+// object to manage login state
+var Logins = {
+  loginManager: Cc["@mozilla.org/login-manager;1"]
+      .getService(Ci.nsILoginManager),
+
+  LOGIN_HOSTNAME: 'https://www.last.fm',
+  LOGIN_FORMURL: 'https://www.last.fm',
+  LOGIN_FIELD_USERNAME: 'username',
+  LOGIN_FIELD_PASSWORD: 'password',
+
+  get: function() {
+    // username & password
+    var username = '';
+    var password = '';
+    // lets ask the login manager
+    var logins = this.loginManager.findLogins({}, this.LOGIN_HOSTNAME,
+                                              this.LOGIN_FORMURL, null);
+    for (var i = 0; i < logins.length; i++) {
+      if (i==0) {
+        // use the first username & password we find
+        username = logins[i].username;
+        password = logins[i].password;
+      } else {
+        // get rid of the rest
+        this.loginManager.removeLogin(logins[i]);
+      }
+    }
+    return {username: username, password: password};
+  },
+
+  set: function(username, password) {
+    var logins = this.loginManager.findLogins({}, this.LOGIN_HOSTNAME,
+                                              this.LOGIN_FORMURL, null);
+    for (var i=0; i<logins.length; i++) {
+      this.loginManager.removeLogin(logins[i]);
+    }
+    // set new login info
+    var nsLoginInfo = new CC("@mozilla.org/login-manager/loginInfo;1",
+      Ci.nsILoginInfo, "init");
+    this.loginManager.addLogin(new nsLoginInfo(this.LOGIN_HOSTNAME,
+        this.LOGIN_FORMURL, null, username, password,
+        this.LOGIN_FIELD_USERNAME, this.LOGIN_FIELD_PASSWORD));
+  }
+}
+
 
 // helper for enumerating enumerators. duh.
 function enumerate(enumerator, func) {
@@ -39,12 +75,6 @@ function enumerate(enumerator, func) {
       Cu.reportError(e);
     }
   }
-}
-
-// helper for getting the set of relevant logins
-function lastfmLogins() {
-  return loginManager.findLogins({}, LOGIN_HOSTNAME, LOGIN_FORMURL,
-      null);
 }
 
 // calculate a hex md5 digest thing
@@ -169,21 +199,10 @@ function sbLastFm() {
   // keep track of our listeners
   this.listeners = new Listeners();
 
-  // username & password
-  this.username = '';
-  this.password = '';
-  // lets ask the login manager
-  var logins = lastfmLogins();
-  for (var i = 0; i < logins.length; i++) {
-    if (i==0) {
-      // use the first username & password we find
-      this.username = logins[i].username;
-      this.password = logins[i].password;
-    } else {
-      // get rid of the rest
-      loginManager.removeLogin(logins[i]);
-    }
-  }
+  // get the username & password
+  var login = Logins.get();
+  this.username = login.username;
+  this.password = login.password;
 
   // session info
   this.session = null;
@@ -254,21 +273,6 @@ function sbLastFm_badSession() {
   this.handshake(function () { }, function() { });
 }
 
-// save the login state in the sbLastFm object back to mozilla's password
-// manager
-sbLastFm.prototype._saveCredentials =
-function sbLastFm_saveCredentials () {
-  // clear old login infos
-  var logins = lastfmLogins();
-  for (var i=0; i<logins.length; i++) {
-    loginManager.removeLogin(logins[i]);
-  }
-  // set new login info
-  loginManager.addLogin(new nsLoginInfo(LOGIN_HOSTNAME,
-      LOGIN_FORMURL, null, self.username, self.password,
-      LOGIN_FIELD_USERNAME, LOGIN_FIELD_PASSWORD));
-}
-
 // login functionality
 sbLastFm.prototype.login =
 function sbLastFm_login() {
@@ -278,7 +282,7 @@ function sbLastFm_login() {
   var self = this;
   this.handshake(function success() {
     // save the credentials
-    self._saveCredentials();
+    Logins.set(self.username, self.password);
 
     // authenticate against the new Last.fm "rest" API
     self.apiAuth();

@@ -5,20 +5,9 @@
     <em:id>audioscrobbler@songbirdnest.com</em:id>
     <em:type>2</em:type>
     <em:name>Last.fm</em:name>
-    <em:version>0.1.0</em:version>
+    <em:version>0.1.0pre1</em:version>
     <em:creator>Ian McKellar</em:creator>
-    <em:contributor>Steve Krulewitz</em:contributor>
-    <em:contributor>Steve Lau</em:contributor>
-
-
     <em:description>Publish your playback history to Last.fm</em:description>
-
-
-
-
-
-
-
     <em:targetApplication>
       <Description>
         <em:id>songbird@songbirdnest.com</em:id>
@@ -26,12 +15,5 @@
         <em:maxVersion>0.7pre</em:maxVersion>
       </Description>
     </em:targetApplication>
-
-
-
-
-
-
-
   </Description>
 </RDF>

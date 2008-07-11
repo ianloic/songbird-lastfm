@@ -86,20 +86,26 @@ function urlencode(o) {
 
 // make an HTTP POST request
 function POST(url, params, onload, onerror) {
-  // create the XMLHttpRequest object
-  var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
-  // don't tie it to a XUL window
-  xhr.mozBackgroundRequest = true;
-  // set up event handlers
-  xhr.onload = function(event) { onload(xhr); }
-  xhr.onerror = function(event) { onerror(xhr); }
-  // open the connection to the url
-  xhr.open('POST', url, true);
-  // we're always sending url encoded parameters
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  // send url encoded parameters
-  xhr.send(urlencode(params));
-  // pass the XHR back to the caller
+  var xhr = null;
+  try {
+    // create the XMLHttpRequest object
+    xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
+    // don't tie it to a XUL window
+    xhr.mozBackgroundRequest = true;
+    // set up event handlers
+    xhr.onload = function(event) { onload(xhr); }
+    xhr.onerror = function(event) { onerror(xhr); }
+    // open the connection to the url
+    xhr.open('POST', url, true);
+    // we're always sending url encoded parameters
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    // send url encoded parameters
+    xhr.send(urlencode(params));
+    // pass the XHR back to the caller
+  } catch(e) {
+    Cu.reportError(e);
+    onerror(xhr);
+  }
   return xhr;
 }
 
@@ -168,7 +174,6 @@ function sbLastFm() {
   this.password = '';
   // lets ask the login manager
   var logins = lastfmLogins();
-  Cu.reportError(logins.length);
   for (var i = 0; i < logins.length; i++) {
     if (i==0) {
       // use the first username & password we find
@@ -211,6 +216,8 @@ function sbLastFm() {
       .getService(Ci.sbIPlaybackHistoryService);
   // add ourselves as a playlist history listener
   this._playbackHistory.addListener(this);
+
+  // a timer to periodically try to post to last.fm
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -223,17 +230,28 @@ sbLastFm.prototype.QueryInterface =
 // failure handling
 sbLastFm.prototype.hardFailure =
 function sbLastFm_hardFailure(message) {
+  dump('hardFailure\n');
   this.hardFailures++;
   if (this.hardFailures >= 3) {
     // after three hard failures, try to re-handshake
     Cu.reportError('Last.fm hard failure: ' + message +
                    '\nFalling back to handshake');
     this.hardFailures = 0;
-    // XXX this.handshake(....);
+    this.session = null;
+    this.handshake(function () { }, function() { });
   } else {
     // just count and log this
     Cu.reportError('Last.fm hard failure: ' + message);
   }
+}
+
+sbLastFm.prototype.badSession =
+function sbLastFm_badSession() {
+  dump('badSession\n');
+  // the server rejected the current session.
+  // we need to re-handshake, but we don't care about the result
+  this.session = null;
+  this.handshake(function () { }, function() { });
 }
 
 // save the login state in the sbLastFm object back to mozilla's password
@@ -304,9 +322,9 @@ function sbLastFm_setLoggedIn(aLoggedIn) {
 sbLastFm.prototype.setOnline=
 function sbLastFm_setOnline(aOnline) {
   if (aOnline) {
-    self.listeners.each(function(l) { l.onOnline(); });
+    this.listeners.each(function(l) { l.onOnline(); });
   } else {
-    self.listeners.each(function(l) { l.onOffline(); });
+    this.listeners.each(function(l) { l.onOffline(); });
   }
 }
 
@@ -359,6 +377,9 @@ function sbLastFm_handshake(success, failure) {
       self.setLoggedIn(true);
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
       self.setOnline(true);
+
+      // we should try to scrobble
+      self.scrobble();
     }, function failure() {
       self.setLoggedIn(false);
       self.listeners.each(function(l) { l.onLoginFailed(); });
@@ -369,7 +390,7 @@ function sbLastFm_handshake(success, failure) {
   };
   this._handshake_xhr.onerror = function(event) {
     /* faileded */
-    Cu.reportError('errored');
+    Cu.reportError('handshake error');
     failureOccurred(false);
   };
   this._handshake_xhr.open('GET', hs_url, true);
@@ -425,6 +446,11 @@ function sbLastFm_nowPlaying(submission) {
 // the PlayedTrack object implements this
 sbLastFm.prototype.submit =
 function sbLastFm_submit(submissions, success, failure) {
+  // if we don't have a session, we need to handshake first
+  if (!this.session) {
+    this.handshake(success, failure);
+  }
+
   // build the submission
   var url = this.submission_url;
   var params = {s:this.session};
@@ -435,23 +461,11 @@ function sbLastFm_submit(submissions, success, failure) {
     }
   }
 
+  //post to AudioScrobbler
   var self = this;
-  // do the posting to last.fm
-  function postToLastFm() {
-    this.asPost(url, params, success,
-                function fail(msg) { self.hardFailure(msg); },
-                function badsession() { self.badSession(); });
-  }
-
-  if (this.session) {
-    // if we already have a session, just go ahead and post
-    postToLastFm();
-  } else {
-    // we need to log in first
-
-  }
-
-
+  this.asPost(url, params, success,
+              function fail(msg) { self.hardFailure(msg); },
+              function badsession() { self.badSession(); });
 }
 
 // get XML from an URL
@@ -604,14 +618,16 @@ function sbLastFm_scrobble() {
                           Math.round(entry_list[i].timestamp/1000)));
     }
     // submit to the last.fm audioscrobbler api
-    this.submit(scrobble_list, function success() {
-      // on success mark all these as scrobbled
-      for (i=0; i<entry_list.length; i++) {
-        entry_list[i].setAnnotation(ANNOTATION_SCROBBLED, 'true');
-      }
-    }, function failure() {
-      // failure happens - we'll try again later anyway
-    });
+    this.submit(scrobble_list,
+      function success() {
+        // on success mark all these as scrobbled
+        for (i=0; i<entry_list.length; i++) {
+          entry_list[i].setAnnotation(ANNOTATION_SCROBBLED, 'true');
+        }
+      },
+      function failure() {
+        // failure happens - we'll try again later anyway
+      });
   }
 }
 

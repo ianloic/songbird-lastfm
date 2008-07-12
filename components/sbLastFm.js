@@ -212,9 +212,6 @@ function sbLastFm() {
   this.nowplaying_url = null;
   this.submission_url = null;
 
-  // logged in state
-  this.loggedIn = false;
-
   // hard failure count
   this.hardFailures = 0;
 
@@ -230,6 +227,31 @@ function sbLastFm() {
   this.__defineSetter__('shouldScrobble', function(val) {
     prefsService.setBoolPref('extensions.lastfm.scrobble', val);
     this.listeners.each(function(l) { l.onShouldScrobbleChanged(val); });
+  });
+
+  // the error state
+  this._error = null;
+  this.__defineGetter__('error', function () { return this._error; });
+  this.__defineSetter__('error', function(val) {
+    this._error = val;
+    this.listeners.each(function(l) {
+      l.onErrorChanged(val); });
+  });
+
+  // the loggedIn state
+  this._loggedIn = false;
+  this.__defineGetter__('loggedIn', function() { return this._loggedIn; });
+  this.__defineSetter__('loggedIn', function(aLoggedIn){
+    this._loggedIn = aLoggedIn;
+    this.listeners.each(function(l) { l.onLoggedInStateChanged(); });
+  });
+
+  // the online state
+  this._online = false;
+  this.__defineGetter__('online', function() { return this._online; });
+  this.__defineSetter__('online', function(aOnline) {
+    this._online = aOnline;
+    this.listeners.each(function(l) { aOnline ? l.onOnline() : l.onOffline() });
   });
 
   // get the playback history service
@@ -254,7 +276,8 @@ sbLastFm.prototype.QueryInterface =
 // failure handling
 sbLastFm.prototype.hardFailure =
 function sbLastFm_hardFailure(message) {
-  dump('hardFailure\n');
+  this.error =
+      'An error occurred while communicating with the Last.fm servers.';
   this.hardFailures++;
   if (this.hardFailures >= 3) {
     // after three hard failures, try to re-handshake
@@ -294,13 +317,13 @@ function sbLastFm_login() {
 
 
   }, function failure(aAuthFailed) {
-    self.setLoggedIn(false);
+    self.loggedIn = false;
     self.listeners.each(function(l) { l.onLoginFailed(); });
-    self.setOnline(false);
+    self.online = false;
   }, function auth_failure() {
-    self.setLoggedIn(false);
+    self.loggedIn = false;
     self.listeners.each(function(l) { l.onLoginFailed(); });
-    self.setOnline(false);
+    self.online = false;
   });
 }
 sbLastFm.prototype.cancelLogin =
@@ -317,25 +340,9 @@ function sbLastFm_logout() {
   this.session = null;
   this.nowplaying_url = null;
   this.submission_url = null;
-  this.setLoggedIn(false);
+  this.loggedIn = false;
 }
 
-// change the login state
-sbLastFm.prototype.setLoggedIn =
-function sbLastFm_setLoggedIn(aLoggedIn) {
-  this.loggedIn = aLoggedIn;
-  this.listeners.each(function(l) { l.onLoggedInStateChanged(); });
-}
-
-// change the online state
-sbLastFm.prototype.setOnline=
-function sbLastFm_setOnline(aOnline) {
-  if (aOnline) {
-    this.listeners.each(function(l) { l.onOnline(); });
-  } else {
-    this.listeners.each(function(l) { l.onOffline(); });
-  }
-}
 
 // do the handshake
 sbLastFm.prototype.handshake =
@@ -383,16 +390,16 @@ function sbLastFm_handshake(success, failure) {
 
     // download profile info
     self.updateProfile(function success() {
-      self.setLoggedIn(true);
+      self.loggedIn = true;
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
-      self.setOnline(true);
+      self.online = true;
 
       // we should try to scrobble
       self.scrobble();
     }, function failure() {
-      self.setLoggedIn(false);
+      self.loggedIn = false;
       self.listeners.each(function(l) { l.onLoginFailed(); });
-      self.setOnline(false);
+      self.online = false;
     });
 
     success();

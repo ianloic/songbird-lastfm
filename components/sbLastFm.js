@@ -14,6 +14,9 @@ const API_KEY = '4d5bce1e977549f10623b51dd0e10c5a';
 const API_SECRET = '3ebb03d4561260686b98388037931f11'; // obviously not secret
 const API_URL = 'http://ws.audioscrobbler.com/2.0/';
 
+// how often should we try to scrobble again?
+const TIMER_INTERVAL = (5*60*1000); // every five minutes sounds lovely
+
 // import the XPCOM helper
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -237,6 +240,8 @@ function sbLastFm() {
   this._playbackHistory.addListener(this);
 
   // a timer to periodically try to post to last.fm
+  this._timer = Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer);
+  this._timer.init(this, TIMER_INTERVAL, Ci.nsITimer.TYPE_REPEATING_SLACK);
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -244,7 +249,7 @@ sbLastFm.prototype.contractID = '@songbirdnest.com/lastfm;1';
 sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
 sbLastFm.prototype.QueryInterface =
-    XPCOMUtils.generateQI([Components.interfaces.sbIPlaybackHistoryListener]);
+    XPCOMUtils.generateQI([Ci.sbIPlaybackHistoryListener, Ci.nsIObserver]);
 
 // failure handling
 sbLastFm.prototype.hardFailure =
@@ -649,6 +654,16 @@ sbLastFm.prototype.onEntriesRemoved =
 function sbLastFm_onEntriesRemoved(aEntries) { }
 sbLastFm.prototype.onEntriesCleared =
 function sbLastFm_onEntriesCleared() { }
+
+
+// nsIObserver - just used for a timer callback
+sbLastFm.prototype.observe =
+function sbLastFm_observe(subject, topic, data) {
+  if (topic == 'timer-callback' && subject == this._timer) {
+    // try to scrobble when the timer ticks
+    this.scrobble();
+  }
+}
 
 
 function NSGetModule(compMgr, fileSpec) {

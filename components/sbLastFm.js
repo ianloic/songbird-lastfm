@@ -647,6 +647,7 @@ function sbLastFm_scrobble() {
         }
         self.playcount += entry_list.length;
         self.listeners.each(function(l) { l.onProfileUpdated(); });
+        self.error = null;
       },
       function failure() {
         // failure happens - we'll try again later anyway

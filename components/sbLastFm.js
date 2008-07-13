@@ -279,6 +279,7 @@ function sbLastFm_hardFailure(message) {
   this.error =
       'An error occurred while communicating with the Last.fm servers.';
   this.hardFailures++;
+
   if (this.hardFailures >= 3) {
     // after three hard failures, try to re-handshake
     Cu.reportError('Last.fm hard failure: ' + message +
@@ -318,10 +319,12 @@ function sbLastFm_login() {
 
   }, function failure(aAuthFailed) {
     self.loggedIn = false;
+    self.error = 'Login failed';
     self.listeners.each(function(l) { l.onLoginFailed(); });
     self.online = false;
   }, function auth_failure() {
     self.loggedIn = false;
+    self.error = 'Login failed';
     self.listeners.each(function(l) { l.onLoginFailed(); });
     self.online = false;
   });
@@ -391,6 +394,7 @@ function sbLastFm_handshake(success, failure) {
     // download profile info
     self.updateProfile(function success() {
       self.loggedIn = true;
+      self.error = null;
       self.listeners.each(function(l) { l.onLoginSucceeded(); });
       self.online = true;
 
@@ -398,6 +402,7 @@ function sbLastFm_handshake(success, failure) {
       self.scrobble();
     }, function failure() {
       self.loggedIn = false;
+      self.error = null;
       self.listeners.each(function(l) { l.onLoginFailed(); });
       self.online = false;
     });

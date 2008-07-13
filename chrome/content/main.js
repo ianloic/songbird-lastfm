@@ -2,7 +2,9 @@
 const ICON_BUSY = 'chrome://lastfm/skin/busy.gif';
 const ICON_DISABLED = 'chrome://lastfm/skin/disabled.png';
 const ICON_LOGGED_IN = 'chrome://lastfm/skin/as.png';
+const ICON_LOGGED_OUT = 'chrome://lastfm/skin/disabled.png';
 const ICON_ERROR = 'chrome://lastfm/skin/error.png';
+const ICON_LOGIN_ERROR = 'chrome://lastfm/skin/error.png';
 
 const URL_SIGNUP = 'http://www.last.fm/join/';
 
@@ -139,7 +141,7 @@ Lastfm.onLoad = function() {
   if (this._service.username && this._service.password) {
     this._service.login();
   } else {
-    this.setStatusIcon(ICON_DISABLED);
+    this.updateStatus();
     this.setStatusTextId('lastfm.status.disabled');
   }
 }
@@ -167,11 +169,11 @@ Lastfm.onCancelClick = function(event) {
   this._service.cancelLogin();
 }
 Lastfm.onLogoutClick = function(event) {
+  this._service.logout();
   this._deck.selectedPanel = this._login;
   this.setLoginError(null);
-  this.setStatusIcon(ICON_DISABLED);
+  this.updateStatus();
   this.setStatusTextId('lastfm.status.disabled');
-  this._service.logout();
 }
 
 // load an URL from an event in the panel
@@ -229,7 +231,7 @@ Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
   this.setLoginErrorId('lastfm.error.login_failed');
 
   // set the status icon
-  this.setStatusIcon(ICON_ERROR);
+  this.updateStatus();
   this.setStatusTextId('lastfm.status.failed');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
@@ -243,7 +245,7 @@ Lastfm.onOnline = function Lastfm_onOnline() {
   this._menuEnableScrobbling.removeAttribute('disabled');
 
   // set the status icon
-  this.setStatusIcon(ICON_LOGGED_IN);
+  this.updateStatus();
   this.setStatusTextId('lastfm.status.logged_in');
 }
 Lastfm.onOffline = function Lastfm_onOffline() {
@@ -253,7 +255,7 @@ Lastfm.onOffline = function Lastfm_onOffline() {
   this._menuEnableScrobbling.setAttribute('disabled', 'true');
 
   // set the status icon
-  this.setStatusIcon(ICON_DISABLED);
+  this.updateStatus();
   this.setStatusTextId('lastfm.status.offline');
 }
 
@@ -274,12 +276,12 @@ Lastfm.onShouldScrobbleChanged = function Lastfm_onShouldScrobbleChanged(val) {
     this._menuEnableScrobbling.setAttribute('checked', 'true');
     this._scrobble.setAttribute('checked', 'true');
     //this._nextContainer.className='';
-    this.setStatusIcon(ICON_LOGGED_IN);
+    this.updateStatus();
   } else {
     this._menuEnableScrobbling.removeAttribute('checked');
     this._scrobble.removeAttribute('checked');
     //this._nextContainer.className='disabled';
-    this.setStatusIcon(ICON_DISABLED);
+    this.updateStatus();
   }
   // FIXME change the status icon?
 }
@@ -287,6 +289,30 @@ Lastfm.onShouldScrobbleChanged = function Lastfm_onShouldScrobbleChanged(val) {
 // update the status icon's icon
 Lastfm.setStatusIcon = function Lastfm_setStatusIcon(aIcon) {
   this._statusIcon.setAttribute('src', aIcon);
+}
+
+// update the status icon based on the current service state
+Lastfm.updateStatus = function Lastfm_updateStatus() {
+  dump('updateStatus error:' + this._service.error +
+       ', loggedIn: ' + this._service.loggedIn +
+       ' shouldScrobble: ' + this._service.shouldScrobble + '\n');
+  if (this._service.error) {
+    if (this._service.loggedIn) {
+      this.setStatusIcon(ICON_ERROR);
+    } else {
+      this.setStatusIcon(ICON_LOGIN_ERROR);
+    }
+  } else {
+    if (this._service.shouldScrobble) {
+      if (this._service.loggedIn) {
+        this.setStatusIcon(ICON_LOGGED_IN);
+      } else {
+        this.setStatusIcon(ICON_LOGGED_OUT);
+      }
+    } else {
+      this.setStatusIcon(ICON_DISABLED);
+    }
+  }
 }
 
 // update the status icon's text
@@ -313,6 +339,12 @@ Lastfm.setLoginError = function Lastfm_setLoginError(aText) {
 // update the login error from the properties file by id
 Lastfm.setLoginErrorId = function Lastfm_setLoginErrorId(aId) {
   this.setLoginError(this._strings.getString(aId));
+}
+
+Lastfm.onErrorChanged = function Lastfm_onErrorChanged(aError) {
+  dump('onErrorChanged('+aError+')\n');
+  this.setLoginError(aError);
+  this.updateStatus();
 }
 
 window.addEventListener("load", function(e) { Lastfm.onLoad(e); }, false);

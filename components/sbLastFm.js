@@ -659,7 +659,17 @@ function sbLastFm_scrobble() {
 // sbIPlaybackHistoryListener
 sbLastFm.prototype.onEntriesAdded =
 function sbLastFm_onEntriesAdded(aEntries) {
-  this.scrobble();
+  if (this.shouldScrobble) {
+    this.scrobble();
+  } else {
+    // scrobbling is disabled, let's mark the added entries as not
+    // scrobbleable
+    enumerate(aEntries.enumerate(),
+              function(item) {
+                item.QueryInterface(Ci.sbIPlaybackHistoryEntry);
+                item.setAnnotation(ANNOTATION_HIDDEN, 'true');
+              });
+  }
 }
 sbLastFm.prototype.onEntriesUpdated =
 function sbLastFm_onEntriesUpdated(aEntries) { }

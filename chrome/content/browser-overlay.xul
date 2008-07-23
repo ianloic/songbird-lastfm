@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="chrome://lastfm/skin/overlay.css" ?>
+<!DOCTYPE window [
+<!ENTITY % lastfmDTD SYSTEM "chrome://lastfm/locale/overlay.dtd">
+%lastfmDTD;
+]>
 <overlay id="lastfm-overlay"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml"
@@ -13,11 +17,11 @@
 
   <menupopup id="menu_ToolsPopup">
     <menuseparator id="lastfmMenuSeparator" insertbefore="devToolsSeparator"/>
-    <menuitem id="lastfmMenuLogout" label="Log out of Last.fm"
+    <menuitem id="lastfmMenuLogout" label="&lastfm.menu.logout;"
               insertbefore="devToolsSeparator"/>
-    <menuitem id="lastfmMenuLogin" label="Log into Last.fm..."
+    <menuitem id="lastfmMenuLogin" label="&lastfm.menu.login;"
               insertbefore="devToolsSeparator"/>
-    <menuitem id="lastfmMenuEnableScrobbling" label="Enable scrobbling"
+    <menuitem id="lastfmMenuEnableScrobbling" label="&lastfm.menu.enable;"
               type="checkbox" insertbefore="devToolsSeparator"/>
   </menupopup>
 

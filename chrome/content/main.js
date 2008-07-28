@@ -131,6 +131,17 @@ Lastfm.onLoad = function() {
   this._scrobble.addEventListener('command',
       function(event) { Lastfm.toggleShouldScrobble(); }, false);
 
+  // the popupshown event on the panel
+  this._panel.addEventListener('popupshown',
+      function(event) {
+        if (Lastfm._deck.selectedPanel == Lastfm._login) {
+          // if the login panel is showing then focus & select the username
+          // field
+          Lastfm._username.focus();
+          Lastfm._username.select();
+        }
+      }, false);
+
   // copy the username & password out of the service into the UI
   this._username.value = this._service.username;
   this._password.value = this._service.password;

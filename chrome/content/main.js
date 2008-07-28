@@ -1,10 +1,11 @@
-
-const ICON_BUSY = 'chrome://lastfm/skin/busy.gif';
-const ICON_DISABLED = 'chrome://lastfm/skin/disabled.png';
-const ICON_LOGGED_IN = 'chrome://lastfm/skin/as.png';
-const ICON_LOGGED_OUT = 'chrome://lastfm/skin/disabled.png';
-const ICON_ERROR = 'chrome://lastfm/skin/error.png';
-const ICON_LOGIN_ERROR = 'chrome://lastfm/skin/error.png';
+var Icons = {
+  busy: 'chrome://lastfm/skin/busy.gif',
+  disabled: 'chrome://lastfm/skin/disabled.png',
+  logged_in: 'chrome://lastfm/skin/as.png',
+  logged_out: 'chrome://lastfm/skin/disabled.png',
+  error: 'chrome://lastfm/skin/error.png',
+  login_error: 'chrome://lastfm/skin/error.png'
+};
 
 const URL_SIGNUP = 'http://www.last.fm/join/';
 
@@ -88,14 +89,16 @@ Lastfm.onLoad = function() {
   // wire up click event for the status icon
   this._statusIcon.addEventListener('click',
       function(event) {
-        if (event.button == 0 && !event.ctrlKey && Lastfm._service.loggedIn &&
-            !Lastfm._service.error) {
-          // if we're logged in, toggle the scrobble state
-          Lastfm.toggleShouldScrobble();
-        } else {
-          // or show the login
+        if (!Lastfm._service.loggedIn) {
+          // if we're not logged in, show the login panel
           Lastfm._deck.selectedPanel = Lastfm._login;
           Lastfm.showPanel();
+        } else if (event.button != 0 || event.ctrlKey) {
+          // if ctrl or right clicks should show the current panel
+          Lastfm.showPanel();
+        } else {
+          // otherwise toggle the scrobble state
+          Lastfm.toggleShouldScrobble();
         }
       }, false);
 
@@ -144,7 +147,6 @@ Lastfm.onLoad = function() {
     this._service.login();
   } else {
     this.updateStatus();
-    this.setStatusTextId('lastfm.status.disabled');
   }
 }
 
@@ -175,7 +177,6 @@ Lastfm.onLogoutClick = function(event) {
   this._deck.selectedPanel = this._login;
   this.setLoginError(null);
   this.updateStatus();
-  this.setStatusTextId('lastfm.status.disabled');
 }
 
 // load an URL from an event in the panel
@@ -220,8 +221,8 @@ Lastfm.onLoggedInStateChanged = function Lastfm_onLoggedInStateChanged() {
 }
 Lastfm.onLoginBegins = function Lastfm_onLoginBegins() {
   this._deck.selectedPanel = this._loggingIn;
-  this.setStatusIcon(ICON_BUSY);
-  this.setStatusTextId('lastfm.status.logging_in');
+  this.setStatusIcon(Icons.busy);
+  this.setStatusTextId('lastfm.state.logging_in');
 }
 Lastfm.onLoginCancelled = function Lastfm_onLoginCancelled() {
   // clear the login error
@@ -234,7 +235,6 @@ Lastfm.onLoginFailed = function Lastfm_onLoginFailed() {
 
   // set the status icon
   this.updateStatus();
-  this.setStatusTextId('lastfm.status.failed');
 }
 Lastfm.onLoginSucceeded = function Lastfm_onLoginSucceeded() {
   // clear the login error
@@ -248,7 +248,6 @@ Lastfm.onOnline = function Lastfm_onOnline() {
 
   // set the status icon
   this.updateStatus();
-  this.setStatusTextId('lastfm.status.logged_in');
 }
 Lastfm.onOffline = function Lastfm_onOffline() {
   // switch back to the login panel
@@ -258,7 +257,6 @@ Lastfm.onOffline = function Lastfm_onOffline() {
 
   // set the status icon
   this.updateStatus();
-  this.setStatusTextId('lastfm.status.offline');
 }
 
 // last.fm profile changed
@@ -298,23 +296,26 @@ Lastfm.updateStatus = function Lastfm_updateStatus() {
   dump('updateStatus error:' + this._service.error +
        ', loggedIn: ' + this._service.loggedIn +
        ' shouldScrobble: ' + this._service.shouldScrobble + '\n');
+  var stateName = '';
   if (this._service.error) {
     if (this._service.loggedIn) {
-      this.setStatusIcon(ICON_ERROR);
+      stateName = 'error';
     } else {
-      this.setStatusIcon(ICON_LOGIN_ERROR);
+      stateName = 'login_error';
     }
   } else {
-    if (this._service.shouldScrobble) {
-      if (this._service.loggedIn) {
-        this.setStatusIcon(ICON_LOGGED_IN);
+    if (this._service.loggedIn) {
+      if (this._service.shouldScrobble) {
+        stateName = 'logged_in';
       } else {
-        this.setStatusIcon(ICON_LOGGED_OUT);
+        stateName = 'disabled';
       }
     } else {
-      this.setStatusIcon(ICON_DISABLED);
+      stateName = 'logged_out';
     }
   }
+  this.setStatusIcon(Icons[stateName]);
+  this.setStatusTextId('lastfm.state.'+stateName);
 }
 
 // update the status icon's text

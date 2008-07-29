@@ -264,6 +264,11 @@ function sbLastFm() {
   // a timer to periodically try to post to last.fm
   this._timer = Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer);
   this._timer.init(this, TIMER_INTERVAL, Ci.nsITimer.TYPE_REPEATING_SLACK);
+
+  // listen to the playlist playback service
+  var pps = Cc['@songbirdnest.com/Songbird/PlaylistPlayback;1']
+    .getService(Ci.sbIPlaylistPlayback);
+  pps.addListener(this);
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -271,7 +276,8 @@ sbLastFm.prototype.contractID = '@songbirdnest.com/lastfm;1';
 sbLastFm.prototype.classID =
     Components.ID('13bc0c9e-5c37-4528-bcf0-5fe37fcdc37a');
 sbLastFm.prototype.QueryInterface =
-    XPCOMUtils.generateQI([Ci.sbIPlaybackHistoryListener, Ci.nsIObserver]);
+    XPCOMUtils.generateQI([Ci.sbIPlaybackHistoryListener, Ci.nsIObserver,
+        Ci.sbIPlaylistPlaybackListener]);
 
 // failure handling
 sbLastFm.prototype.hardFailure =
@@ -458,7 +464,8 @@ function sbLastFm_nowPlaying(submission) {
   for (var j=0; j<props.length; j++) {
     params[props[j]] = submission[props[j]];
   }
-  this.asPost(url, params, success, failure);
+  // post, but don't worry about failure or success, this is best-effort
+  this.asPost(url, params, function() { }, function() { });
 }
 
 // the first argument is an array of object, each with one-letter keys
@@ -687,6 +694,21 @@ function sbLastFm_observe(subject, topic, data) {
     this.scrobble();
   }
 }
+
+
+// sbIPlaylistPlaybackListener
+sbLastFm.prototype.onTrackChange =
+function sbLastFm_onTrackChange(aItem, aView, aIndex) {
+  if (this.shouldScrobble && this.loggedIn) {
+    this.nowPlaying(new PlayedTrack(aItem));
+  }
+}
+
+sbLastFm.prototype.onStop = function sbLastFm_onStop() { }
+sbLastFm.prototype.onBeforeTrackChange =
+function sbLastFm_onBeforeTrackChange(aItem, aView, aIndex) { }
+sbLastFm.prototype.onTrackIndexChange =
+function sbLastFm_onTrackIndexChange(aItem, aView, aIndex) { }
 
 
 function NSGetModule(compMgr, fileSpec) {

@@ -217,18 +217,20 @@ Lastfm.onLoggedInStateChanged = function Lastfm_onLoggedInStateChanged() {
     // logged in
 
     // show the "log out" menu item
-    this._menuLogout.style.visibility = 'visible';
+    this._menuEnableScrobbling.parentNode.insertBefore(this._menuLogout,
+        this._menuEnableScrobbling);
     // hide the "log in" menu item
-    this._menuLogin.style.visibility = 'collapse';
+    this._menuLogin.parentNode.removeChild(this._menuLogin);
     // enable the "enable scrobbling" menu item
     this._menuEnableScrobbling.disabled = false;
   } else {
     // logged out
 
     // hide the "log out" menu item
-    this._menuLogout.style.visibility = 'collapse';
+    this._menuLogout.parentNode.removeChild(this._menuLogout);
     // show the "log in" menu item
-    this._menuLogin.style.visibility = 'visible';
+    this._menuEnableScrobbling.parentNode.insertBefore(this._menuLogin,
+        this._menuEnableScrobbling);
     // disable the "enable scrobbling" menu item
     this._menuEnableScrobbling.disabled = true;
   }

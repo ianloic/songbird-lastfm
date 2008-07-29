@@ -269,6 +269,10 @@ function sbLastFm() {
   var pps = Cc['@songbirdnest.com/Songbird/PlaylistPlayback;1']
     .getService(Ci.sbIPlaylistPlayback);
   pps.addListener(this);
+
+  // track metrics
+  this._metrics = Cc['@songbirdnest.com/Songbird/Metrics;1']
+    .getService(Ci.sbIMetrics);
 }
 // XPCOM Magic
 sbLastFm.prototype.classDescription = 'Songbird Last.fm Service'
@@ -316,6 +320,9 @@ function sbLastFm_login() {
   // first step - handshake.
   var self = this;
   this.handshake(function success() {
+    // increment metrics
+    self._metrics.metricsInc('lastfm', 'login', null);
+
     // save the credentials
     Logins.set(self.username, self.password);
 
@@ -655,6 +662,8 @@ function sbLastFm_scrobble() {
         self.playcount += entry_list.length;
         self.listeners.each(function(l) { l.onProfileUpdated(); });
         self.error = null;
+        // increment metrics
+        self._metrics.metricsAdd('lastfm', 'scrobble', null, entry_list.length);
       },
       function failure() {
         // failure happens - we'll try again later anyway

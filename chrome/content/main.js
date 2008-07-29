@@ -24,6 +24,10 @@ Lastfm.onLoad = function() {
   this._service = Components.classes['@songbirdnest.com/lastfm;1']
     .getService().wrappedJSObject
 
+  // get metrics service
+  this.metrics = Cc['@songbirdnest.com/Songbird/Metrics;1']
+    .getService(Ci.sbIMetrics);
+
   // get references to our pieces of ui
 
   // menu items
@@ -80,17 +84,28 @@ Lastfm.onLoad = function() {
 
   // wire up UI events for the menu items
   this._menuLogin.addEventListener('command',
-      function(event) { Lastfm.showPanel(); }, false);
+      function(event) { 
+        Lastfm.metrics.metricsInc('lastfm', 'menu', 'login');
+        Lastfm.showPanel(); 
+      }, false);
   this._menuLogout.addEventListener('command',
-      function(event) { Lastfm.onLogoutClick(event); }, false);
+      function(event) { 
+        Lastfm.metrics.metricsInc('lastfm', 'menu', 'logout');
+        Lastfm.onLogoutClick(event); 
+      }, false);
   this._menuEnableScrobbling.addEventListener('command',
-      function(event) { Lastfm.toggleShouldScrobble(); }, false);
+      function(event) { 
+        Lastfm.metrics.metricsInc('lastfm', 'menu', 'scrobble');
+        Lastfm.toggleShouldScrobble(); 
+      }, false);
 
   // wire up click event for the status icon
   this._statusIcon.addEventListener('click',
       function(event) {
         // only the left button
         if (event.button != 0) return;
+
+        Lastfm.metrics.metricsInc('lastfm', 'icon', 'click');
 
         if (!Lastfm._service.loggedIn) {
           // if we're not logged in, show the login panel
@@ -103,7 +118,10 @@ Lastfm.onLoad = function() {
       }, false);
   // and the contextmenu event
   this._statusIcon.addEventListener('contextmenu',
-      function(event) { Lastfm.showPanel(); }, false);
+      function(event) { 
+        Lastfm.metrics.metricsInc('lastfm', 'icon', 'context');
+        Lastfm.showPanel(); 
+      }, false);
 
   // wire up UI events for the buttons
   this._loginButton.addEventListener('command',

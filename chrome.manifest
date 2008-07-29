@@ -4,6 +4,7 @@ skin    lastfm  classic/1.0 chrome/skin/
 
 
 overlay chrome://songbird/content/xul/layoutWithBrowserOverlay.xul chrome://lastfm/content/browser-overlay.xul
+overlay chrome://songbird/content/xul/layoutWithoutBrowserOverlay.xul chrome://lastfm/content/mini-overlay.xul
 
 
 
